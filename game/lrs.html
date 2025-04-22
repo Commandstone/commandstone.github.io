@@ -2,140 +2,227 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>网页版狼人杀</title>
+    <title>高级狼人杀游戏</title>
     <style>
+        /* 界面样式优化 */
         .container {
             display: grid;
-            grid-template-columns: 1fr 300px;
+            grid-template-columns: 1fr 350px;
             gap: 20px;
             padding: 20px;
-            background: #2c3e50;
-            color: white;
+            background: #1a1a1a;
+            color: #fff;
             min-height: 100vh;
         }
-        #playerList {
-            border: 2px solid #34495e;
+        #playerPanel {
+            border: 2px solid #2d2d2d;
             padding: 15px;
+            border-radius: 8px;
         }
         .player-card {
-            background: #34495e;
+            background: #333;
             margin: 10px;
-            padding: 10px;
+            padding: 15px;
             border-radius: 5px;
             cursor: pointer;
+            transition: 0.3s;
         }
-        button {
-            background: #3498db;
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 4px;
-            margin: 5px;
+        .player-card:hover {
+            background: #444;
+        }
+        #gameLog {
+            background: #222;
+            height: 400px;
+            overflow-y: auto;
+            padding: 10px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div id="playerList"></div>
-        <div id="actionPanel">
-            <h3>当前阶段：<span id="phase">夜晚</span></h3>
-            <div id="skillButtons"></div>
+        <div id="playerPanel"></div>
+        <div id="controlPanel">
+            <h3>游戏阶段：<span id="phaseDisplay">准备中</span></h3>
+            <div id="actionButtons"></div>
+            <div id="gameLog"></div>
         </div>
     </div>
 
     <script>
-        // ================= 游戏核心逻辑 =================
-        const players = [
-            { id: 1, role: '狼人', camp: 'wolf', alive: true },
-            { id: 2, role: '平民', camp: 'human', alive: true },
-            { id: 3, role: '女巫', camp: 'human', alive: true },
-            { id: 4, role: '预言家', camp: 'human', alive: true }
-        ].sort(() => Math.random() - 0.5); // 随机分配角色:ml-citation{ref="2,6" data="citationList"}
-
-        let currentPhase = 'night';
-        let killedPlayer = null;
-        const witch = { poison: 1, antidote: 1 };
-
-        // ================= 界面渲染 =================
-        function renderPlayers() {
-            const container = document.getElementById('playerList');
-            container.innerHTML = players.map(player => `
-                <div class="player-card" data-id="${player.id}" 
-                     onclick="handlePlayerClick(${player.id})"
-                     style="opacity: ${player.alive ? 1 : 0.5}">
-                    <span>玩家 ${player.id}</span>
-                    <span>${player.alive ? '存活' : '死亡'}</span>
-                </div>
-            `).join('');
-        }
-
-        function updateActionPanel() {
-            document.getElementById('phase').textContent = 
-                currentPhase === 'night' ? '夜晚' : '白天';
-            
-            const skillPanel = document.getElementById('skillButtons');
-            if (currentPhase === 'night') {
-                skillPanel.innerHTML = players.find(p => p.role === '狼人')?.alive ? 
-                    '<button onclick="endNightPhase()">狼人行动结束</button>' : '';
-            } else {
-                skillPanel.innerHTML = '<button onclick="startVoting()">开始投票</button>';
+        // ================= 游戏核心类定义 =================
+        class Game {
+            constructor() {
+                this.players = [];
+                this.phase = 'night'; // night/day
+                this.currentStage = 'wolf'; // wolf/witch/prophet
+                this.killedTonight = [];
+                this.gameLog = [];
+                this.initRoles();
             }
-        }
 
-        // ================= 阶段控制 =================
-        function startNightPhase() {
-            currentPhase = 'night';
-            killedPlayer = null;
-            players.forEach(p => {
-                if (p.role === '狼人' && p.alive) {
-                    killedPlayer = players[Math.floor(Math.random() * players.length)];
+            initRoles() {
+                const roles = [
+                    { role: '狼人', camp: 'wolf', count: 2 },
+                    { role: '预言家', camp: 'human', count: 1 },
+                    { role: '女巫', camp: 'human', count: 1 },
+                    { role: '猎人', camp: 'human', count: 1 },
+                    { role: '平民', camp: 'human', count: 4 }
+                ];
+                
+                roles.forEach(r => {
+                    for (let i = 0; i < r.count; i++) {
+                        this.players.push({
+                            id: this.players.length + 1,
+                            role: r.role,
+                            camp: r.camp,
+                            alive: true,
+                            poisoned: false,
+                            protected: false
+                        });
+                    }
+                });
+                this.players = this.shuffleArray(this.players);:ml-citation{ref="2,6" data="citationList"}
+            }
+
+            shuffleArray(arr) {
+                return arr.sort(() => Math.random() - 0.5);
+            }
+
+            // ================= 夜晚阶段逻辑 =================
+            wolfAction(targetId) {
+                const target = this.players.find(p => p.id === targetId);
+                if (target.protected) {
+                    this.addLog(`守卫保护了 ${targetId} 号玩家`);
+                    return;
                 }
-            });
-            updateActionPanel();:ml-citation{ref="2,4" data="citationList"}
+                this.killedTonight.push(targetId);
+                this.addLog(`狼人选择击杀 ${targetId} 号玩家`);:ml-citation{ref="3,7" data="citationList"}
+            }
+
+            witchAction(type, targetId = null) {
+                const witch = this.players.find(p => p.role === '女巫');
+                if (type === 'antidote') {
+                    witch.antidote = false;
+                    this.killedTonight = [];
+                    this.addLog(`女巫使用解药救活了 ${targetId} 号`);
+                } else if (type === 'poison') {
+                    witch.poison = false;
+                    this.players.find(p => p.id === targetId).alive = false;
+                    this.addLog(`女巫毒杀了 ${targetId} 号玩家`);:ml-citation{ref="5,7" data="citationList"}
+                }
+            }
+
+            prophetAction(targetId) {
+                const target = this.players.find(p => p.id === targetId);
+                this.addLog(`${targetId} 号玩家属于 ${target.camp} 阵营`);:ml-citation{ref="6,7" data="citationList"}
+            }
+
+            // ================= 白天阶段逻辑 =================
+            startVoting() {
+                this.phase = 'day';
+                this.addLog("开始投票环节");
+                this.renderPlayers();
+            }
+
+            processVotes() {
+                const votes = {};
+                this.players.forEach(p => {
+                    if (p.alive && p.voteTarget) {
+                        votes[p.voteTarget] = (votes[p.voteTarget] || 0) + 1;
+                    }
+                });
+                const maxVotes = Math.max(...Object.values(votes));
+                const targets = Object.keys(votes).filter(k => votes[k] === maxVotes);
+                
+                targets.forEach(t => {
+                    const player = this.players.find(p => p.id == t);
+                    player.alive = false;
+                    this.addLog(`${t} 号玩家被投票处决`);
+                    if (player.role === '猎人') this.hunterAction(t);:ml-citation{ref="3,7" data="citationList"}
+                });
+            }
+
+            hunterAction(targetId) {
+                const hunter = this.players.find(p => p.id == targetId);
+                if (hunter.alive) return;
+                this.addLog("猎人发动技能，请选择带走的玩家");
+                // 需实现玩家选择逻辑:ml-citation{ref="7" data="citationList"}
+            }
+
+            // ================= 辅助方法 =================
+            addLog(text) {
+                this.gameLog.push(`[${new Date().toLocaleTimeString()}] ${text}`);
+                this.renderLog();
+            }
+
+            checkGameEnd() {
+                const wolves = this.players.filter(p => p.camp === 'wolf' && p.alive);
+                const humans = this.players.filter(p => p.camp === 'human' && p.alive);
+                if (wolves.length === 0) return 'human';
+                if (wolves.length >= humans.length) return 'wolf';
+                return null;
+            }
         }
 
-        function endNightPhase() {
-            // 女巫技能触发
-            if (witch.antidote > 0 && confirm('是否使用解药？')) {
-                killedPlayer.alive = true;
-                witch.antidote--;
-            } else if (witch.poison > 0 && confirm('是否使用毒药？')) {
-                const target = prompt('输入要毒杀的玩家编号');
-                players.find(p => p.id == target).alive = false;
-                witch.poison--;
+        // ================= 界面渲染与交互 =================
+        const game = new Game();
+        
+        function renderPlayers() {
+            const container = document.getElementById('playerPanel');
+            container.innerHTML = game.players.map(p => `
+                <div class="player-card" data-id="${p.id}" 
+                     onclick="handlePlayerClick(${p.id})"
+                     style="opacity: ${p.alive ? 1 : 0.4}">
+                    <span>玩家 ${p.id}</span>
+                    <span>${p.alive ? '存活' : '死亡'}</span>
+                    ${p.poisoned ? '💀' : ''}
+                </div>
+            `).join('');:ml-citation{ref="8" data="citationList"}
+        }
+
+        function updateControlPanel() {
+            document.getElementById('phaseDisplay').textContent = 
+                game.phase === 'night' ? '夜晚' : '白天';
+            
+            const btnPanel = document.getElementById('actionButtons');
+            if (game.phase === 'night') {
+                let buttons = '';
+                if (game.currentStage === 'wolf') {
+                    buttons = '<button onclick="nextStage()">狼人行动完成</button>';
+                } else if (game.currentStage === 'witch') {
+                    buttons = `
+                        <button onclick="useAntidote()">使用解药</button>
+                        <button onclick="usePoison()">使用毒药</button>
+                    `;
+                }
+                btnPanel.innerHTML = buttons;:ml-citation{ref="7,8" data="citationList"}
+            } else {
+                btnPanel.innerHTML = '<button onclick="startVoting()">开始投票</button>';
             }
-            currentPhase = 'day';
-            renderPlayers();
-            updateActionPanel();:ml-citation{ref="4,6" data="citationList"}
         }
 
         // ================= 事件处理 =================
         function handlePlayerClick(playerId) {
-            if (currentPhase === 'night') return;
-            const player = players.find(p => p.id === playerId);
-            if (player.alive) {
-                player.votes = (player.votes || 0) + 1;
+            if (game.phase === 'night') {
+                if (game.currentStage === 'wolf') game.wolfAction(playerId);
+                else if (game.currentStage === 'prophet') game.prophetAction(playerId);
+            } else {
+                const player = game.players.find(p => p.id === playerId);
+                if (player.alive) player.voteTarget = playerId;
             }
+            renderPlayers();:ml-citation{ref="6,8" data="citationList"}
         }
 
-        function startVoting() {
-            const maxVotes = Math.max(...players.map(p => p.votes || 0));
-            const votedPlayers = players.filter(p => p.votes === maxVotes);
-            votedPlayers.forEach(p => p.alive = false);
-            renderPlayers();
-            checkGameEnd();:ml-citation{ref="1,6" data="citationList"}
-        }
-
-        function checkGameEnd() {
-            const wolves = players.filter(p => p.camp === 'wolf' && p.alive);
-            const humans = players.filter(p => p.camp === 'human' && p.alive);
-            if (wolves.length === 0) alert('人类阵营胜利！');
-            if (wolves.length >= humans.length) alert('狼人阵营胜利！');
+        function nextStage() {
+            const stages = ['wolf', 'witch', 'prophet'];
+            const index = stages.indexOf(game.currentStage);
+            game.currentStage = stages[index + 1] || 'day';
+            updateControlPanel();:ml-citation{ref="7" data="citationList"}
         }
 
         // ================= 初始化 =================
         renderPlayers();
-        startNightPhase();
+        updateControlPanel();
     </script>
 </body>
 </html>
