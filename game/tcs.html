@@ -1,167 +1,121 @@
 
-<!documentTYPE html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="zh-CN">
 <head>
-<meta charset="utf-8" />
-<title>贪吃蛇 Snake Game</title>
-<style type="text/css">
-body {text-align:center;}
-canvas { border:5px dotted #ccc; }
-h1 { font-size:50px; text-align: center; margin: 0; padding-bottom: 25px;}
-</style>
-<script type="text/javascript">
-    var snake_x;//记录当前蛇的各元素的x坐标数组
-    var snake_y; //记录当前蛇的各元素的y坐标数组
-    var snake_x2=[];//用于克隆snake_x，记录上一步蛇的位置
-    var snake_y2=[];//用于克隆snake_y，记录上一步蛇的位置
-    var snake_len;//蛇长度
-    var eleWidth=10;//蛇的每一个元素的长度
-    var food_x;//食物的x坐标
-    var food_y;//食物的y坐标
-    var can;//画布
-    var context;
-    var cur_dir;//蛇的运行方向
-    var move1,move2;//蛇的初始定时器,用于清除
-    var timeOut=200;//定时器的时长
-    var score;//显示分数的元素
-    function play_game() //开始游戏
-    {
-        can=document.getElementById("playArea");
-        context=can.getContext("2d");
-        score=document.getElementById("span_score");
-        span_score.innerText="0";
-        snake_x=[10,9,8,7,6,5,4,3,2,1];
-        snake_y=[10,10,10,10,10,10,10,10,10,10];
-        snake_len=snake_x.length;
-        cur_dir=2;
-        context.clearRect(0,0,300,300);
-	clearInterval(move1);
-        moveSnake(cur_dir);
-        placeFood();
-        move1=setInterval("moveSnake("+cur_dir+")",timeOut);
-    }
-    //画蛇
-    function drawSnake()
-    {
-        if(snake_x[0]==300/eleWidth||snake_x[0]==-1||snake_y[0]==300/eleWidth||snake_y[0]==-1)
-        {
-            clearInterval(move1);
-            snake_x.length=snake_y.length=0;
-            alert("YOU ARE OVER!");
-            return;
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>贪吃蛇小游戏</title>
+    <style>
+        #gameCanvas {
+            border: 2px solid #333;
+            background: #000;
         }
-        context.fillStyle="black";
-        context.strokeStyle="white";
-        for(var i=0;i<snake_len;i++)
-        {
-            context.clearRect(snake_x2[i]*eleWidth,snake_y2[i]*eleWidth,eleWidth,eleWidth);
-            context.strokeRect(snake_x[i]*eleWidth,snake_y[i]*eleWidth,eleWidth,eleWidth);
-            context.fillRect(snake_x[i]*eleWidth,snake_y[i]*eleWidth,eleWidth,eleWidth);
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: #f0f0f0;
         }
-    }
-    //移动蛇
-    function moveSnake(curDir)//移动蛇
-    {
-        var add_x,add_y;//吃了食物之后需要在尾部追加的坐标
-        snake_x2=snake_x.concat();
-        snake_y2=snake_y.concat();
-        switch(curDir){
-            case 1 :   //上
-                snake_y.pop();
-                snake_y.splice(0,0,snake_y2[0]-1);
-                snake_x.pop();
-                snake_x.splice(0,0,snake_x2[0]);
-                break;
-            case 2 : //右
-                snake_x.pop();
-                snake_x.splice(0,0,snake_x[0]+1);
-                snake_y.pop();
-                snake_y.splice(0,0,snake_y2[0]);
-                break;
-            case 3 : //下
-                snake_y.pop();
-                snake_y.splice(0,0,snake_y2[0]+1);
-                snake_x.pop();
-                snake_x.splice(0,0,snake_x2[0]);
-                break;
-            case 0 : //左
-                snake_x.pop();
-                snake_x.splice(0,0,snake_x[0]-1);
-                snake_y.pop();
-                snake_y.splice(0,0,snake_y2[0]);
-                break;
+        #score {
+            font-size: 24px;
+            margin: 20px 0;
         }
-        addSnake();
-        drawSnake();
-    }
-    document.onkeydown = function(e) {  //改变蛇方向
-        clearInterval(move1);
-        clearInterval(move2);
-        var code = e.keyCode - 37;
-        switch(code){
-            case 1 ://上
-                cur_dir=1;
-                break;
-            case 2 ://右
-                cur_dir=2;
-                break;
-            case 3 ://下
-                cur_dir=3;
-                break;
-            case 0 ://左
-                cur_dir=0;
-                break;
-        }
-        move1=setInterval("moveSnake("+cur_dir+")",timeOut);
-    }
-    //摆放食物
-    function placeFood()
-    {
-        food_x=Math.floor(Math.random()*300/eleWidth);//食物的x轴坐标
-        food_y=Math.floor(Math.random()*300/eleWidth);//食物的y轴坐标
-        if(snake_x.indexOf(food_x)==-1&&snake_y.indexOf(food_y)==-1)
-        {
-            context.fillStyle="black";
-            context.strokeStyle="white";
-            context.strokeRect(food_x*eleWidth,food_y*eleWidth,eleWidth,eleWidth);
-            context.fillRect(food_x*eleWidth,food_y*eleWidth,eleWidth,eleWidth);
-        }
-        else
-        {
-            placeFood();
-        }
-    }
-    //吃到食物，追加蛇的长度
-    function addSnake()
-    {
-        if(snake_x[0]==food_x&&snake_y[0]==food_y)
-        {
-            snake_x.push(snake_x2[snake_len-1]);
-            snake_y.push(snake_y2[snake_len-1]);
-            context.clearRect(food_x*eleWidth,food_y*eleWidth,eleWidth,eleWidth)
-            placeFood();
-            snake_len++;
-            span_score.innerText=parseInt(span_score.innerText)+100;
-        }
-    }
-    function stop_game()
-    {
-        clearInterval(move1);
-    }
-    function continue_game()
-    {
-        move1=setInterval("moveSnake("+cur_dir+")",timeOut);
-    }
-</script>
+    </style>
 </head>
 <body>
-<h1>贪吃蛇 Snake Game</h1>
-<canvas id="playArea" width="300" height="300">不好意思，您的浏览器不支持HTML5</canvas>
-<div style="text-align: center">
-<input type="button" value="开始" οnclick="play_game()" style="font-weight: bold"/>
-<input type="button" value="停止" οnclick="stop_game()" style="font-weight: bold"/>
-<input type="button" value="继续" οnclick="continue_game()" style="font-weight: bold"/>
-<span style="font-weight: bold">得分:</span><span style="color:red" id="span_score"></span>
-</div>
+    <div id="score">得分: 0</div>
+    <canvas id="gameCanvas" width="400" height="400"></canvas>
+    <script>
+        // 初始化变量:ml-citation{ref="2,5" data="citationList"}
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreElement = document.getElementById('score');
+        let snake = [{x: 200, y: 200}];
+        let direction = 'right';
+        let food = generateFood();
+        let score = 0;
+        let gameLoopId;
+
+        // 生成食物:ml-citation{ref="2,4" data="citationList"}
+        function generateFood() {
+            return {
+                x: Math.floor(Math.random() * 20) * 20,
+                y: Math.floor(Math.random() * 20) * 20
+            };
+        }
+
+        // 绘制游戏元素:ml-citation{ref="2,7" data="citationList"}
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // 绘制蛇
+            ctx.fillStyle = '#4CAF50';
+            snake.forEach(segment => ctx.fillRect(segment.x, segment.y, 18, 18));
+            // 绘制食物
+            ctx.fillStyle = '#FF0000';
+            ctx.fillRect(food.x, food.y, 18, 18);
+        }
+
+        // 移动蛇:ml-citation{ref="4,7" data="citationList"}
+        function moveSnake() {
+            const head = {...snake[0]};
+            switch(direction) {
+                case 'up':    head.y -= 20; break;
+                case 'down':  head.y += 20; break;
+                case 'left':  head.x -= 20; break;
+                case 'right': head.x += 20; break;
+            }
+            snake.unshift(head);
+            // 检测是否吃到食物:ml-citation{ref="4,6" data="citationList"}
+            if (head.x === food.x && head.y === food.y) {
+                score += 10;
+                scoreElement.textContent = `得分: ${score}`;
+                food = generateFood();
+            } else {
+                snake.pop();
+            }
+        }
+
+        // 碰撞检测:ml-citation{ref="2,4" data="citationList"}
+        function checkCollision() {
+            const head = snake[0];
+            // 边界碰撞
+            if (head.x < 0 || head.x >= 400 || head.y < 0 || head.y >= 400) return true;
+            // 自身碰撞
+            for (let i = 1; i < snake.length; i++) {
+                if (head.x === snake[i].x && head.y === snake[i].y) return true;
+            }
+            return false;
+        }
+
+        // 游戏主循环:ml-citation{ref="4,7" data="citationList"}
+        function startGame() {
+            if (gameLoopId) clearInterval(gameLoopId);
+            gameLoopId = setInterval(() => {
+                moveSnake();
+                if (checkCollision()) {
+                    clearInterval(gameLoopId);
+                    ctx.fillStyle = '#FFF';
+                    ctx.font = '40px Arial';
+                    ctx.fillText('游戏结束!', 120, 200);
+                }
+                draw();
+            }, 200);
+        }
+
+        // 键盘事件监听:ml-citation{ref="2,7" data="citationList"}
+        document.addEventListener('keydown', (e) => {
+            switch(e.key) {
+                case 'ArrowUp':    if (direction !== 'down') direction = 'up'; break;
+                case 'ArrowDown':  if (direction !== 'up') direction = 'down'; break;
+                case 'ArrowLeft':  if (direction !== 'right') direction = 'left'; break;
+                case 'ArrowRight': if (direction !== 'left') direction = 'right'; break;
+            }
+        });
+
+        // 启动游戏
+        startGame();
+    </script>
 </body>
-  </html>
+</html>
