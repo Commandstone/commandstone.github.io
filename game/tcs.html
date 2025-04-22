@@ -26,7 +26,7 @@
 </head>
 <body>
     <div id="score">得分: 0</div>
-    <canvas id="gameCanvas" width="400" height="400"></canvas>
+    <canvas id="gameCanvas" width="500" height="500"></canvas>
     <script>
         // 初始化变量:ml-citation{ref="2,5" data="citationList"}
         const canvas = document.getElementById('gameCanvas');
@@ -82,7 +82,7 @@
         function checkCollision() {
             const head = snake[0];
             // 边界碰撞
-            if (head.x < 0 || head.x >= 400 || head.y < 0 || head.y >= 400) return true;
+            if (head.x < 0 || head.x >= 500 || head.y < 0 || head.y >= 500) return true;
             // 自身碰撞
             for (let i = 1; i < snake.length; i++) {
                 if (head.x === snake[i].x && head.y === snake[i].y) return true;
