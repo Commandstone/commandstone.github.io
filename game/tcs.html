@@ -84,9 +84,9 @@
             // 边界碰撞
             if (head.x < 0 || head.x >= 500 || head.y < 0 || head.y >= 500) return true;
             // 自身碰撞
-            for (let i = 1; i < snake.length; i++) {
-                if (head.x === snake[i].x && head.y === snake[i].y) return true;
-            }
+            //for (let i = 1; i < snake.length; i++) {
+            //    if (head.x === snake[i].x && head.y === snake[i].y) return true;
+            //}
             return false;
         }
 
