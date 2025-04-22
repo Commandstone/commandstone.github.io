@@ -52,10 +52,11 @@
             // 绘制蛇
             ctx.fillStyle = '#4CAF50';
             snake.forEach(segment => ctx.fillRect(segment.x, segment.y, 18, 18));
+            snake.forEach(segment => ctx.fillRect2(segment.x, segment.y, 18, 18));
             // 绘制食物
             ctx.fillStyle = '#FF0000';
             ctx.fillRect(food.x, food.y, 18, 18);
-            ctx.fillRect(food.y, food.x, 9, 9);
+            ctx.fillRect2(food.y, food.x, 18, 18);
         }
 
         // 移动蛇:ml-citation{ref="4,7" data="citationList"}
