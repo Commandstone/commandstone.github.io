@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>贪吃蛇小游戏</title>
+    <title>贪吃蛇-无尽[有很多bug]</title>
     <style>
         #gameCanvas {
             border: 2px solid #333;
@@ -55,6 +55,7 @@
             // 绘制食物
             ctx.fillStyle = '#FF0000';
             ctx.fillRect(food.x, food.y, 18, 18);
+            ctx.fillRect(food.y, food.x, 9, 9);
         }
 
         // 移动蛇:ml-citation{ref="4,7" data="citationList"}
