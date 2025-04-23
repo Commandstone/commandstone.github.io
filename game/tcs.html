@@ -32,13 +32,13 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const scoreElement = document.getElementById('score');
-        let snake = [{x: 200, y: 200}];
+        let snake = [{x: 250, y: 250}];
         let direction = 'right';
         let food = generateFood();
         let score = 0;
         let gameLoopId;
 
-        // 生成食物:ml-citation{ref="2,4" data="citationList"}
+        // 生成食物
         function generateFood() {
             return {
                 x: Math.floor(Math.random() * 20) * 20,
@@ -81,7 +81,7 @@
         function checkCollision() {
             const head = snake[0];
             // 边界碰撞
-            if (head.x < 0 || head.x >= 500 || head.y < 0 || head.y >= 500) return true;
+            if (head.x < 0 || head.x >= 550 || head.y < 0 || head.y >= 550) return true;
             // 自身碰撞
             for (let i = 1; i < snake.length; i++) {
                 if (head.x === snake[i].x && head.y === snake[i].y) return true;
