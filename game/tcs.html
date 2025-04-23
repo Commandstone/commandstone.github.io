@@ -52,14 +52,12 @@
             // 绘制蛇
             ctx.fillStyle = '#4CAF50';
             snake.forEach(segment => ctx.fillRect(segment.x, segment.y, 18, 18));
-            snake.forEach(segment => ctx.fillRect2(segment.x, segment.y, 18, 18));
             // 绘制食物
             ctx.fillStyle = '#FF0000';
             ctx.fillRect(food.x, food.y, 18, 18);
-            ctx.fillRect2(food.y, food.x, 18, 18);
         }
 
-        // 移动蛇:ml-citation{ref="4,7" data="citationList"}
+        // 移动蛇
         function moveSnake() {
             const head = {...snake[0]};
             switch(direction) {
@@ -85,9 +83,9 @@
             // 边界碰撞
             if (head.x < 0 || head.x >= 500 || head.y < 0 || head.y >= 500) return true;
             // 自身碰撞
-            //for (let i = 1; i < snake.length; i++) {
-            //    if (head.x === snake[i].x && head.y === snake[i].y) return true;
-            //}
+            for (let i = 1; i < snake.length; i++) {
+                if (head.x === snake[i].x && head.y === snake[i].y) return true;
+            }
             return false;
         }
 
