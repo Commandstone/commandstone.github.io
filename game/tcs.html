@@ -1,527 +1,80 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Advanced Snake Game</title>
+    <title>经典贪吃蛇</title>
     <style>
+        canvas {
+            border: 2px solid #4CAF50;
+            background: #000;
+        }
         body {
             display: flex;
             flex-direction: column;
             align-items: center;
-            background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
-            color: white;
-            font-family: 'Arial', sans-serif;
-            margin: 0;
-            padding: 20px;
+            background: #f0f0f0;
         }
-
-        #game-container {
-            position: relative;
-            margin: 20px;
-        }
-
-        #game-canvas {
-            border: 3px solid #4CAF50;
-            border-radius: 10px;
-            box-shadow: 0 0 20px rgba(76, 175, 80, 0.3);
-        }
-
-        .control-panel {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin: 20px;
-        }
-
-        .dashboard {
-            display: flex;
-            justify-content: space-between;
-            width: 600px;
+        #score {
+            font: 20px Arial;
             margin: 10px;
-            padding: 15px;
-            background: rgba(0, 0, 0, 0.7);
-            border-radius: 8px;
-        }
-
-        button {
-            padding: 12px 24px;
-            font-size: 16px;
-            cursor: pointer;
-            background: #4CAF50;
-            border: none;
-            color: white;
-            border-radius: 5px;
-            transition: all 0.3s ease;
-        }
-
-        button:hover {
-            background: #45a049;
-            transform: scale(1.05);
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.9);
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
-            z-index: 1000;
-        }
-
-        .powerup {
-            animation: pulse 1s infinite;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.2); }
-            100% { transform: scale(1); }
-        }
-
-        #mobile-controls {
-            display: none;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin-top: 20px;
-        }
-
-        @media (max-width: 600px) {
-            #game-canvas {
-                width: 300px;
-                height: 300px;
-            }
-            #mobile-controls {
-                display: grid;
-            }
         }
     </style>
 </head>
 <body>
-    <h1>Advanced Snake Game</h1>
-    <div class="dashboard">
-        <div>Score: <span id="score">0</span></div>
-        <div>High Score: <span id="highscore">0</span></div>
-        <div>Speed: <span id="speed">1</span>x</div>
-    </div>
-    <div id="game-container">
-        <canvas id="game-canvas" width="600" height="400"></canvas>
-        <div id="mobile-controls">
-            <button onclick="game.changeDirection('ArrowUp')">↑</button>
-            <button onclick="game.changeDirection('ArrowLeft')">←</button>
-            <button onclick="game.changeDirection('ArrowRight')">→</button>
-            <button onclick="game.changeDirection('ArrowDown')">↓</button>
-        </div>
-    </div>
-    <div class="control-panel">
-        <button id="start-btn">Start Game</button>
-        <button id="pause-btn">Pause</button>
-        <select id="game-mode">
-            <option value="classic">Classic Mode</option>
-            <option value="endless">Endless Mode</option>
-            <option value="maze">Maze Mode</option>
-        </select>
-    </div>
-    <div id="game-over" class="modal">
-        <h2>Game Over!</h2>
-        <p>Final Score: <span id="final-score">0</span></p>
-        <button onclick="game.restart()">Play Again</button>
-    </div>
+    <div id="score">得分: 0</div>
+    <canvas id="game" width="400" height="400"></canvas>
 
     <script>
-        class SnakeGame {
-            constructor() {
-                this.canvas = document.getElementById('game-canvas');
-                this.ctx = this.canvas.getContext('2d');
-                this.cellSize = 20;
-                this.gameLoop = null;
-                this.snake = [];
-                this.direction = 'right';
-                this.food = null;
-                this.score = 0;
-                this.highScore = 0;
-                this.gameSpeed = 150;
-                this.isPaused = false;
-                this.gameMode = 'classic';
-                this.powerups = [];
-                this.obstacles = [];
-                this.init();
+        const canvas = document.getElementById('game');
+        const ctx = canvas.getContext('2d');
+        const gridSize = 20;
+        let snake = [{x:10, y:10}];
+        let food = {x:15, y:15};
+        let dx = 1, dy = 0;
+        let score = 0;
+
+        document.addEventListener('keydown', (e) => {
+            const key = e.key.replace('Arrow', '');
+            if (key === 'Up' && dy !== 1) { dx=0; dy=-1 }
+            if (key === 'Down' && dy !== -1) { dx=0; dy=1 }
+            if (key === 'Left' && dx !== 1) { dx=-1; dy=0 }
+            if (key === 'Right' && dx !== -1) { dx=1; dy=0 }
+        });
+
+        function gameLoop() {
+            // 移动蛇
+            const head = {x: snake[0].x + dx, y: snake[0].y + dy};
+            snake.unshift(head);
+
+            // 吃食物检测
+            if (head.x === food.x && head.y === food.y) {
+                score += 10;
+                document.getElementById('score').textContent = `得分: ${score}`;
+                food = {x: Math.floor(Math.random()*(canvas.width/gridSize)), 
+                        y: Math.floor(Math.random()*(canvas.height/gridSize))};
+            } else {
+                snake.pop();
             }
 
-            init() {
-                this.loadHighScore();
-                this.setupControls();
-                this.setupEventListeners();
-                this.generateObstacles();
+            // 碰撞检测
+            if (head.x < 0 || head.x >= canvas.width/gridSize || 
+                head.y < 0 || head.y >= canvas.height/gridSize ||
+                snake.slice(1).some(seg => seg.x === head.x && seg.y === head.y)) {
+                alert('游戏结束！得分: ' + score);
+                location.reload();
             }
 
-            setupControls() {
-                document.getElementById('start-btn').addEventListener('click', () => this.start());
-                document.getElementById('pause-btn').addEventListener('click', () => this.togglePause());
-                document.getElementById('game-mode').addEventListener('change', (e) => {
-                    this.gameMode = e.target.value;
-                    this.reset();
-                });
-            }
-
-            setupEventListeners() {
-                document.addEventListener('keydown', (e) => {
-                    if (e.key.startsWith('Arrow')) {
-                        e.preventDefault();
-                        this.changeDirection(e.key);
-                    }
-                });
-            }
-
-            start() {
-                if (!this.gameLoop) {
-                    this.reset();
-                    this.gameLoop = setInterval(() => this.update(), this.gameSpeed);
-                }
-            }
-
-            reset() {
-                this.snake = [
-                    {x: 5, y: 5},
-                    {x: 4, y: 5},
-                    {x: 3, y: 5}
-                ];
-                this.direction = 'right';
-                this.score = 0;
-                this.updateScore();
-                this.generateFood();
-                this.powerups = [];
-                this.generateObstacles();
-                this.hideGameOver();
-            }
-
-            update() {
-                if (this.isPaused) return;
-                
-                this.moveSnake();
-                this.checkCollision();
-                this.checkFood();
-                this.checkPowerups();
-                this.draw();
-            }
-
-            moveSnake() {
-                const head = {...this.snake[0]};
-                
-                switch(this.direction) {
-                    case 'up': head.y--; break;
-                    case 'down': head.y++; break;
-                    case 'left': head.x--; break;
-                    case 'right': head.x++; break;
-                }
-
-                // Handle game mode specific behavior
-                if (this.gameMode === 'endless') {
-                    if (head.x < 0) head.x = Math.floor(this.canvas.width / this.cellSize) - 1;
-                    if (head.x >= this.canvas.width / this.cellSize) head.x = 0;
-                    if (head.y < 0) head.y = Math.floor(this.canvas.height / this.cellSize) - 1;
-                    if (head.y >= this.canvas.height / this.cellSize) head.y = 0;
-                }
-
-                this.snake.unshift(head);
-                if (!this.foodConsumed) {
-                    this.snake.pop();
-                }
-                this.foodConsumed = false;
-            }
-
-            checkCollision() {
-                const head = this.snake[0];
-                
-                // Wall collision
-                if (this.gameMode !== 'endless' && (
-                    head.x < 0 || head.x >= this.canvas.width / this.cellSize ||
-                    head.y < 0 || head.y >= this.canvas.height / this.cellSize)) {
-                    this.gameOver();
-                    return;
-                }
-
-                // Self collision
-                for (let i = 1; i < this.snake.length; i++) {
-                    if (head.x === this.snake[i].x && head.y === this.snake[i].y) {
-                        this.gameOver();
-                        return;
-                    }
-                }
-
-                // Obstacle collision
-                if (this.gameMode === 'maze') {
-                    for (const obstacle of this.obstacles) {
-                        if (head.x === obstacle.x && head.y === obstacle.y) {
-                            this.gameOver();
-                            return;
-                        }
-                    }
-                }
-            }
-
-            checkFood() {
-                const head = this.snake[0];
-                if (head.x === this.food.x && head.y === this.food.y) {
-                    this.score += 10;
-                    this.updateScore();
-                    this.foodConsumed = true;
-                    this.generateFood();
-                    this.speedUp();
-                    this.generatePowerup();
-                }
-            }
-
-            checkPowerups() {
-                const head = this.snake[0];
-                for (let i = this.powerups.length - 1; i >= 0; i--) {
-                    const p = this.powerups[i];
-                    if (head.x === p.x && head.y === p.y) {
-                        this.applyPowerup(p.type);
-                        this.powerups.splice(i, 1);
-                    }
-                }
-            }
-
-            applyPowerup(type) {
-                switch(type) {
-                    case 'speed':
-                        this.gameSpeed = Math.max(50, this.gameSpeed - 20);
-                        break;
-                    case 'slow':
-                        this.gameSpeed += 30;
-                        break;
-                    case 'double':
-                        this.score += 20;
-                        break;
-                }
-                this.updateSpeedDisplay();
-            }
-
-            generateFood() {
-                const maxX = Math.floor(this.canvas.width / this.cellSize);
-                const maxY = Math.floor(this.canvas.height / this.cellSize);
-                
-                do {
-                    this.food = {
-                        x: Math.floor(Math.random() * maxX),
-                        y: Math.floor(Math.random() * maxY)
-                    };
-                } while (this.isPositionOccupied(this.food));
-            }
-
-            generatePowerup() {
-                if (Math.random() < 0.2) {
-                    const types = ['speed', 'slow', 'double'];
-                    const maxX = Math.floor(this.canvas.width / this.cellSize);
-                    const maxY = Math.floor(this.canvas.height / this.cellSize);
-                    
-                    const powerup = {
-                        x: Math.floor(Math.random() * maxX),
-                        y: Math.floor(Math.random() * maxY),
-                        type: types[Math.floor(Math.random() * types.length)]
-                    };
-                    
-                    if (!this.isPositionOccupied(powerup)) {
-                        this.powerups.push(powerup);
-                    }
-                }
-            }
-
-            generateObstacles() {
-                if (this.gameMode === 'maze') {
-                    this.obstacles = [];
-                    const maxX = Math.floor(this.canvas.width / this.cellSize);
-                    const maxY = Math.floor(this.canvas.height / this.cellSize);
-                    
-                    for (let i = 0; i < 15; i++) {
-                        let obstacle;
-                        do {
-                            obstacle = {
-                                x: Math.floor(Math.random() * maxX),
-                                y: Math.floor(Math.random() * maxY)
-                            };
-                        } while (this.isPositionOccupied(obstacle));
-                        this.obstacles.push(obstacle);
-                    }
-                }
-            }
-
-            isPositionOccupied(pos) {
-                return this.snake.some(segment => segment.x === pos.x && segment.y === pos.y) ||
-                    (this.food && this.food.x === pos.x && this.food.y === pos.y) ||
-                    this.powerups.some(p => p.x === pos.x && p.y === pos.y) ||
-                    this.obstacles.some(o => o.x === pos.x && o.y === pos.y);
-            }
-
-            draw() {
-                // Clear canvas
-                this.ctx.fillStyle = '#000';
-                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-
-                // Draw snake
-                this.snake.forEach((segment, index) => {
-                    this.ctx.fillStyle = index === 0 ? '#4CAF50' : '#45a049';
-                    this.ctx.fillRect(
-                        segment.x * this.cellSize,
-                        segment.y * this.cellSize,
-                        this.cellSize - 2,
-                        this.cellSize - 2
-                    );
-                });
-
-                // Draw food
-                this.ctx.fillStyle = '#ff0000';
-                this.ctx.beginPath();
-                this.ctx.arc(
-                    this.food.x * this.cellSize + this.cellSize/2,
-                    this.food.y * this.cellSize + this.cellSize/2,
-                    this.cellSize/2 - 2,
-                    0,
-                    Math.PI * 2
-                );
-                this.ctx.fill();
-
-                // Draw powerups
-                this.powerups.forEach(p => {
-                    this.ctx.fillStyle = this.getPowerupColor(p.type);
-                    this.ctx.beginPath();
-                    this.ctx.arc(
-                        p.x * this.cellSize + this.cellSize/2,
-                        p.y * this.cellSize + this.cellSize/2,
-                        this.cellSize/2 - 2,
-                        0,
-                        Math.PI * 2
-                    );
-                    this.ctx.fill();
-                });
-
-                // Draw obstacles
-                if (this.gameMode === 'maze') {
-                    this.obstacles.forEach(o => {
-                        this.ctx.fillStyle = '#666';
-                        this.ctx.fillRect(
-                            o.x * this.cellSize,
-                            o.y * this.cellSize,
-                            this.cellSize - 2,
-                            this.cellSize - 2
-                        );
-                    });
-                }
-            }
-
-            getPowerupColor(type) {
-                switch(type) {
-                    case 'speed': return '#00ffff';
-                    case 'slow': return '#ff9900';
-                    case 'double': return '#ff00ff';
-                }
-            }
-
-            speedUp() {
-                if (this.score % 50 === 0) {
-                    this.gameSpeed = Math.max(50, this.gameSpeed - 10);
-                    this.updateSpeedDisplay();
-                }
-            }
-
-            updateScore() {
-                document.getElementById('score').textContent = this.score;
-                if (this.score > this.highScore) {
-                    this.highScore = this.score;
-                    document.getElementById('highscore').textContent = this.highScore;
-                    this.saveHighScore();
-                }
-            }
-
-            updateSpeedDisplay() {
-                document.getElementById('speed').textContent = 
-                    (1000 / this.gameSpeed).toFixed(1);
-            }
-
-            gameOver() {
-                clearInterval(this.gameLoop);
-                this.gameLoop = null;
-                document.getElementById('final-score').textContent = this.score;
-                document.getElementById('game-over').style.display = 'block';
-            }
-
-            hideGameOver() {
-                document.getElementById('game-over').style.display = 'none';
-            }
-
-            togglePause() {
-                this.isPaused = !this.isPaused;
-                document.getElementById('pause-btn').textContent = 
-                    this.isPaused ? 'Resume' : 'Pause';
-            }
-
-            changeDirection(newDirection) {
-                const oppositeDirections = {
-                    up: 'down',
-                    down: 'up',
-                    left: 'right',
-                    right: 'left'
-                };
-                
-                if (newDirection.includes('Arrow')) {
-                    newDirection = newDirection.replace('Arrow', '').toLowerCase();
-                }
-                
-                if (newDirection !== oppositeDirections[this.direction]) {
-                    this.direction = newDirection;
-                }
-            }
-
-            restart() {
-                clearInterval(this.gameLoop);
-                this.gameLoop = null;
-                this.reset();
-                this.start();
-            }
-
-            loadHighScore() {
-                this.highScore = localStorage.getItem('snakeHighScore') || 0;
-                document.getElementById('highscore').textContent = this.highScore;
-            }
-
-            saveHighScore() {
-                localStorage.setItem('snakeHighScore', this.highScore);
-            }
+            // 绘制
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.fillStyle = '#4CAF50';
+            snake.forEach(seg => ctx.fillRect(seg.x*gridSize, seg.y*gridSize, gridSize-2, gridSize-2));
+            
+            ctx.fillStyle = 'red';
+            ctx.fillRect(food.x*gridSize, food.y*gridSize, gridSize-2, gridSize-2);
         }
 
-        // Initialize game
-        const game = new SnakeGame();
-
-        // Mobile touch controls
-        let touchStartX = 0;
-        let touchStartY = 0;
-        const minSwipeDistance = 30;
-
-        document.addEventListener('touchstart', e => {
-            touchStartX = e.changedTouches[0].screenX;
-            touchStartY = e.changedTouches[0].screenY;
-        });
-
-        document.addEventListener('touchend', e => {
-            const touchEndX = e.changedTouches[0].screenX;
-            const touchEndY = e.changedTouches[0].screenY;
-            const dx = touchEndX - touchStartX;
-            const dy = touchEndY - touchStartY;
-
-            if (Math.abs(dx) > Math.abs(dy)) {
-                if (Math.abs(dx) > minSwipeDistance) {
-                    game.changeDirection(dx > 0 ? 'right' : 'left');
-                }
-            } else {
-                if (Math.abs(dy) > minSwipeDistance) {
-                    game.changeDirection(dy > 0 ? 'down' : 'up');
-                }
-            }
-        });
+        setInterval(gameLoop, 150);
     </script>
 </body>
 </html>
