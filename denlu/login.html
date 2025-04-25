@@ -1,35 +1,178 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>登录</title>
-    <link rel="stylesheet" href="style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录系统</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #FFD700 0%, #7CFC00 100%);
+            font-family: 'Segoe UI', sans-serif;
+            animation: gradientBG 10s ease infinite;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .login-card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            width: 360px;
+            transform: translateY(0);
+            transition: transform 0.3s ease;
+        }
+
+        .login-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .login-header h1 {
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+        }
+
+        .login-header p {
+            color: #95a5a6;
+            font-size: 0.9rem;
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ecf0f1;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        input:focus {
+            border-color: #7cfc00;
+            box-shadow: 0 0 8px rgba(124, 252, 0, 0.3);
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #95a5a6;
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, #7CFC00, #6dd400);
+            color: white;
+            padding: 14px;
+            width: 100%;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: opacity 0.3s ease;
+        }
+
+        .submit-btn:hover {
+            opacity: 0.9;
+        }
+
+        .error-message {
+            color: #e74c3c;
+            text-align: center;
+            margin-top: 1rem;
+            height: 0;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .error-message.show {
+            height: auto;
+            opacity: 1;
+            margin-top: 1.5rem;
+        }
+    </style>
 </head>
 <body>
-    <h2>登录</h2>
-    <form id="loginForm">
-        <label for="username">用户名:</label>
-        <input type="text" name="username" id="username" required>
-        <br>
-        <label for="password">密码:</label>
-        <input type="password" name="password" id="password" required>
-        <br>
-        <button type="submit">登录</button>
-    </form>
-    <a href="register.html">没有账号？点击注册</a>
+    <div class="login-card">
+        <div class="login-header">
+            <h1>欢迎登录</h1>
+            <p>支持账户：admin / cst / test| 测试账户密码：123456 </p>
+        </div>
+        <form id="loginForm">
+            <div class="input-group">
+                <input type="text" 
+                       id="username" 
+                       placeholder="用户名"
+                       required>
+            </div>
+            <div class="input-group">
+                <input type="password" 
+                       id="password" 
+                       placeholder="密码"
+                       required>
+                <span class="password-toggle" onclick="togglePassword()">👁️</span>
+            </div>
+            <button type="submit" class="submit-btn">立即登录</button>
+            <div class="error-message" id="errorMsg">验证失败，请检查输入！</div>
+        </form>
+    </div>
 
     <script>
-        document.getElementById('loginForm').addEventListener('submit', async function(event) {
-            event.preventDefault();
-            const formData = new FormData(event.target);
-            const response = await fetch('login.php', {
-                method: 'POST',
-                body: formData
-            });
-            const result = await response.text();
-            alert(result);
-            if (response.ok) {
-                window.location.href = 'profile.html';
+        // 密码可见切换
+        function togglePassword() {
+            const passwordField = document.getElementById('password');
+            const toggleIcon = document.querySelector('.password-toggle');
+            if (passwordField.type === 'password') {
+                passwordField.type = 'text';
+                toggleIcon.textContent = '👁️';
+            } else {
+                passwordField.type = 'password';
+                toggleIcon.textContent = '👁️';
+            }
+        }
+
+        // 表单提交验证
+        document.getElementById('loginForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const errorMsg = document.getElementById('errorMsg');
+
+            // 验证逻辑
+            const validUsers = ['admin', 'cst','test'];
+            const validPasswords = ['123456', '24682468a','123456'];
+            
+            if (validUsers.includes(username) && validPasswords.includes(password)) {
+                // 登录成功处理
+                window.location.href = 'dashboard.html'; // 修改跳转地址
+            } else {
+                // 显示错误提示
+                errorMsg.classList.add('show');
+                // 2秒后隐藏提示
+                setTimeout(() => {
+                    errorMsg.classList.remove('show');
+                }, 2000);
             }
         });
     </script>
