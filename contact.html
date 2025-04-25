@@ -1,18 +1,102 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Contact Page</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>联系方式</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #FFEB3B, #4CAF50);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .contact-card {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+            max-width: 600px;
+            width: 90%;
+        }
+
+        h1 {
+            color: #2E7D32;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .contact-item {
+            margin: 25px 0;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 10px;
+            transition: transform 0.3s ease;
+        }
+
+        .contact-item:hover {
+            transform: translateY(-5px);
+        }
+
+        h2 {
+            color: #4CAF50;
+            margin-bottom: 10px;
+            font-size: 1.8em;
+        }
+
+        p {
+            color: #333;
+            font-size: 1.2em;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 480px) {
+            .contact-card {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            h2 {
+                font-size: 1.5em;
+            }
+            
+            p {
+                font-size: 1em;
+            }
+        }
+    </style>
 </head>
 <body>
-    <div class="contact-container">
-        <h1>联系方式</h1>
-        <div class="contact-info">
-            <p class="contact-item">邮箱: <a href="mailto:Cst@cdst.dpdns.org" class="contact-email">Cst@cdst.dpdns.org</a></p>
-            <p class="contact-item">电话: <a href="tel:+86 19841815517" class="contact-phone">+86 19841815517</a></p>
-            <p class="contact-item">QQ: 3931650248,Command_stone</p>
+    <div class="contact-card">
+        <h1>联系我们</h1>
+        
+        <div class="contact-item">
+            <h2>📌 QQ</h2>
+            <p>QQ号:<br>3931650248</p>
+        </div>
+
+        <div class="contact-item">
+            <h2>📞 电话</h2>
+            <p>+86 198-4181-5517<br>+86 139-1234-5678</p>
+        </div>
+
+        <div class="contact-item">
+            <h2>📧 电子邮件</h2>
+            <p>command_stone_luck@outlook.com<br>cst@cdst.dpdns.org</p>
         </div>
     </div>
 </body>
