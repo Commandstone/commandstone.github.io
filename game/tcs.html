@@ -59,7 +59,7 @@
             if (head.x < 0 || head.x >= canvas.width/gridSize || 
                 head.y < 0 || head.y >= canvas.height/gridSize ||
                 snake.slice(1).some(seg => seg.x === head.x && seg.y === head.y)) {
-                alert('游戏结束！得分: ' + score);
+                alert('如在玩，请刷新网页游戏结束！得分: ' + score);
                 location.reload();
             }
 
