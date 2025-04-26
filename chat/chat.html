@@ -5,8 +5,8 @@
     <title>多用户聊天室</title>
     <style>
         :root {
-            --primary-color: #4ecdc4;
-            --secondary-color: #f9d423;
+            --primary: #4ecdc4;
+            --secondary: #f9d423;
         }
 
         * {
@@ -17,7 +17,7 @@
         }
 
         body {
-            background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+            background: linear-gradient(135deg, var(--secondary), var(--primary));
             min-height: 100vh;
             padding: 20px;
         }
@@ -42,7 +42,7 @@
         }
 
         .message {
-            max-width: 70%;
+            max-width: 80%;
             margin: 10px;
             padding: 15px;
             border-radius: 15px;
@@ -50,8 +50,8 @@
             position: relative;
         }
 
-        .user-message {
-            background: var(--primary-color);
+        .own-message {
+            background: var(--primary);
             color: white;
             align-self: flex-end;
         }
@@ -61,11 +61,19 @@
             align-self: flex-start;
         }
 
-        .message-info {
+        .message-header {
             display: flex;
             justify-content: space-between;
-            font-size: 0.8em;
-            margin-bottom: 5px;
+            font-size: 0.9em;
+            margin-bottom: 8px;
+        }
+
+        .reply-section {
+            border-left: 3px solid var(--primary);
+            padding-left: 10px;
+            margin: 8px 0;
+            color: #666;
+            font-size: 0.9em;
         }
 
         .input-area {
@@ -76,18 +84,15 @@
             gap: 10px;
         }
 
-        input, select {
+        input, button {
             padding: 12px;
-            border: 2px solid var(--primary-color);
+            border: 2px solid var(--primary);
             border-radius: 25px;
             outline: none;
         }
 
         button {
-            padding: 12px 25px;
-            background: var(--primary-color);
-            border: none;
-            border-radius: 25px;
+            background: var(--primary);
             color: white;
             cursor: pointer;
             transition: 0.3s;
@@ -95,18 +100,23 @@
 
         button:hover {
             background: #3db3ab;
-            transform: translateY(-2px);
+        }
+
+        .nickname-setter {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            z-index: 100;
         }
 
         @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
     </style>
 </head>
@@ -114,72 +124,101 @@
     <div class="chat-container">
         <div class="messages" id="messages"></div>
         <div class="input-area">
-            <select id="userSelect">
-                <option value="user1">当前用户</option>
-                <option value="user2">用户2</option>
-            </select>
-            <input type="text" id="messageInput" placeholder="输入消息...">
+            <input type="text" id="messageInput" placeholder="输入消息..." style="flex:1">
             <button onclick="sendMessage()">发送</button>
         </div>
     </div>
 
     <script>
-        const messagesContainer = document.getElementById('messages');
-        const messageInput = document.getElementById('messageInput');
-        const userSelect = document.getElementById('userSelect');
-        
-        // 初始化消息存储
+        let currentUser = localStorage.getItem('chatNickname') || '';
+        let replyingTo = null;
         let messages = JSON.parse(localStorage.getItem('chatMessages')) || [];
 
-        // 加载历史消息
-        function loadMessages() {
-            messagesContainer.innerHTML = '';
-            messages.forEach(msg => {
-                createMessageElement(msg);
-            });
+        // 初始化用户昵称
+        if(!currentUser) {
+            const nickname = prompt('请设置您的昵称：');
+            if(nickname) {
+                currentUser = nickname;
+                localStorage.setItem('chatNickname', nickname);
+            }
         }
 
-        // 创建消息元素
-        function createMessageElement(msg) {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${msg.sender === 'user1' ? 'user-message' : 'other-message'}`;
+        // 消息构造函数
+        class ChatMessage {
+            constructor(sender, content, replyTo = null) {
+                this.id = Date.now();
+                this.sender = sender;
+                this.content = content;
+                this.timestamp = new Date().toISOString();
+                this.replyTo = replyTo;
+            }
+        }
+
+        // 渲染消息
+        function renderMessages() {
+            const container = document.getElementById('messages');
+            container.innerHTML = '';
             
-            const time = new Date(msg.timestamp).toLocaleTimeString();
-            messageDiv.innerHTML = `
-                <div class="message-info">
-                    <span>${msg.sender}</span>
-                    <span>${time}</span>
-                </div>
-                <div>${msg.content}</div>
-            `;
-            
-            messagesContainer.appendChild(messageDiv);
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            messages.forEach(msg => {
+                const isOwn = msg.sender === currentUser;
+                const replyMsg = msg.replyTo ? messages.find(m => m.id === msg.replyTo) : null;
+                
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${isOwn ? 'own-message' : 'other-message'}`;
+                
+                messageDiv.innerHTML = `
+                    <div class="message-header">
+                        <span>${msg.sender}</span>
+                        <span>${new Date(msg.timestamp).toLocaleTimeString()}</span>
+                    </div>
+                    ${replyMsg ? `
+                        <div class="reply-section">
+                            回复 ${replyMsg.sender}: 
+                            ${replyMsg.content}
+                        </div>
+                    ` : ''}
+                    <div>${msg.content}</div>
+                    ${!isOwn ? `<button style="margin-top:8px; font-size:0.8em" 
+                              onclick="setReply(${msg.id})">回复</button>` : ''}
+                `;
+                
+                container.appendChild(messageDiv);
+            });
+            container.scrollTop = container.scrollHeight;
         }
 
         // 发送消息
         function sendMessage() {
-            const content = messageInput.value.trim();
-            if (content) {
-                const message = {
-                    sender: userSelect.value,
-                    content: content,
-                    timestamp: new Date().getTime()
-                };
-                
-                messages.push(message);
+            const input = document.getElementById('messageInput');
+            const content = input.value.trim();
+            
+            if(content) {
+                const newMsg = new ChatMessage(currentUser, content, replyingTo);
+                messages.push(newMsg);
                 localStorage.setItem('chatMessages', JSON.stringify(messages));
-                createMessageElement(message);
-                messageInput.value = '';
+                
+                input.value = '';
+                replyingTo = null;
+                renderMessages();
             }
         }
 
-        // 初始化加载消息
-        loadMessages();
+        // 设置回复
+        function setReply(messageId) {
+            const targetMsg = messages.find(m => m.id === messageId);
+            if(targetMsg) {
+                replyingTo = messageId;
+                document.getElementById('messageInput').placeholder = 
+                    `回复 ${targetMsg.sender}: ${targetMsg.content.substring(0, 20)}...`;
+            }
+        }
+
+        // 初始化渲染
+        renderMessages();
 
         // 回车发送
-        messageInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') sendMessage();
+        document.getElementById('messageInput').addEventListener('keypress', e => {
+            if(e.key === 'Enter') sendMessage();
         });
     </script>
 </body>
