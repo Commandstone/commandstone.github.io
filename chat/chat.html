@@ -2,27 +2,32 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>渐变聊天室</title>
+    <title>多用户聊天室</title>
     <style>
+        :root {
+            --primary-color: #4ecdc4;
+            --secondary-color: #f9d423;
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Microsoft YaHei', sans-serif;
+            font-family: 'Segoe UI', sans-serif;
         }
 
         body {
-            background: linear-gradient(135deg, #f9d423 0%, #4ecdc4 100%);
+            background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
             min-height: 100vh;
+            padding: 20px;
         }
 
         .chat-container {
             max-width: 800px;
-            margin: 20px auto;
+            margin: 0 auto;
             background: rgba(255, 255, 255, 0.9);
             border-radius: 15px;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
-            overflow: hidden;
             height: 90vh;
             display: flex;
             flex-direction: column;
@@ -32,53 +37,60 @@
             flex: 1;
             padding: 20px;
             overflow-y: auto;
+            display: flex;
+            flex-direction: column;
         }
 
         .message {
             max-width: 70%;
-            margin-bottom: 15px;
-            padding: 12px 18px;
-            border-radius: 20px;
-            animation: fadeIn 0.3s ease;
-            word-break: break-word;
+            margin: 10px;
+            padding: 15px;
+            border-radius: 15px;
+            animation: slideIn 0.3s ease;
+            position: relative;
         }
 
-        .received {
+        .user-message {
+            background: var(--primary-color);
+            color: white;
+            align-self: flex-end;
+        }
+
+        .other-message {
             background: #f1f1f1;
             align-self: flex-start;
         }
 
-        .sent {
-            background: #4ecdc4;
-            color: white;
-            align-self: flex-end;
+        .message-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8em;
+            margin-bottom: 5px;
         }
 
         .input-area {
             padding: 20px;
             background: rgba(255, 255, 255, 0.95);
-            border-top: 1px solid #eee;
+            border-top: 1px solid #ddd;
             display: flex;
             gap: 10px;
         }
 
-        input {
-            flex: 1;
+        input, select {
             padding: 12px;
-            border: 2px solid #4ecdc4;
+            border: 2px solid var(--primary-color);
             border-radius: 25px;
             outline: none;
-            font-size: 16px;
         }
 
         button {
             padding: 12px 25px;
-            background: #4ecdc4;
+            background: var(--primary-color);
             border: none;
             border-radius: 25px;
             color: white;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: 0.3s;
         }
 
         button:hover {
@@ -86,41 +98,27 @@
             transform: translateY(-2px);
         }
 
-        @keyframes fadeIn {
+        @keyframes slideIn {
             from {
                 opacity: 0;
-                transform: translateY(10px);
+                transform: translateY(20px);
             }
             to {
                 opacity: 1;
                 transform: translateY(0);
             }
         }
-
-        /* 滚动条样式 */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: rgba(0, 0, 0, 0.1);
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #4ecdc4;
-            border-radius: 4px;
-        }
     </style>
 </head>
 <body>
     <div class="chat-container">
-        <div class="messages" id="messages">
-            <!-- 示例消息 -->
-            <div class="message received">你好！有什么可以帮你的？</div>
-            <div class="message sent">你好！这个界面真漂亮</div>
-        </div>
+        <div class="messages" id="messages"></div>
         <div class="input-area">
-            <input type="text" id="messageInput" placeholder="输入消息..." />
+            <select id="userSelect">
+                <option value="user1">用户1</option>
+                <option value="user2">用户2</option>
+            </select>
+            <input type="text" id="messageInput" placeholder="输入消息...">
             <button onclick="sendMessage()">发送</button>
         </div>
     </div>
@@ -128,37 +126,60 @@
     <script>
         const messagesContainer = document.getElementById('messages');
         const messageInput = document.getElementById('messageInput');
+        const userSelect = document.getElementById('userSelect');
+        
+        // 初始化消息存储
+        let messages = JSON.parse(localStorage.getItem('chatMessages')) || [];
 
-        // 发送消息函数
-        function sendMessage() {
-            const message = messageInput.value.trim();
-            if (message) {
-                // 添加发送的消息
-                addMessage(message, 'sent');
-                // 清空输入框
-                messageInput.value = '';
-                // 模拟回复
-                setTimeout(() => {
-                    addMessage('已收到你的消息：' + message, 'received');
-                }, 1000);
-            }
+        // 加载历史消息
+        function loadMessages() {
+            messagesContainer.innerHTML = '';
+            messages.forEach(msg => {
+                createMessageElement(msg);
+            });
         }
 
-        // 添加消息到界面
-        function addMessage(text, type) {
+        // 创建消息元素
+        function createMessageElement(msg) {
             const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${type}`;
-            messageDiv.textContent = text;
+            messageDiv.className = `message ${msg.sender === 'user1' ? 'user-message' : 'other-message'}`;
+            
+            const time = new Date(msg.timestamp).toLocaleTimeString();
+            messageDiv.innerHTML = `
+                <div class="message-info">
+                    <span>${msg.sender}</span>
+                    <span>${time}</span>
+                </div>
+                <div>${msg.content}</div>
+            `;
+            
             messagesContainer.appendChild(messageDiv);
-            // 自动滚动到底部
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
 
-        // 回车发送功能
-        messageInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                sendMessage();
+        // 发送消息
+        function sendMessage() {
+            const content = messageInput.value.trim();
+            if (content) {
+                const message = {
+                    sender: userSelect.value,
+                    content: content,
+                    timestamp: new Date().getTime()
+                };
+                
+                messages.push(message);
+                localStorage.setItem('chatMessages', JSON.stringify(messages));
+                createMessageElement(message);
+                messageInput.value = '';
             }
+        }
+
+        // 初始化加载消息
+        loadMessages();
+
+        // 回车发送
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
         });
     </script>
 </body>
