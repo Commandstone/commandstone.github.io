@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高级二维码工坊</title>
+    <style>
+        :root {
+            --gold: #FFD700;
+            --green: #7CFC00;
+        }
+
+        body {
+            margin: 0;
+            padding: 2rem;
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--gold) 0%, var(--green) 100%);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            max-width: 800px;
+            width: 90%;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        input, button, select {
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        input[type="color"] {
+            padding: 3px;
+            height: 40px;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--green);
+            outline: none;
+            box-shadow: 0 0 8px rgba(124, 252, 0, 0.3);
+        }
+
+        button {
+            background: var(--green);
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: var(--gold);
+            transform: translateY(-2px);
+        }
+
+        .qr-container {
+            position: relative;
+            margin: 20px auto;
+            max-width: 500px;
+        }
+
+        #qrcode {
+            margin: 0 auto;
+        }
+
+        .logo-overlay {
+            position: absolute;
+            width: 20%;
+            height: 20%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+        }
+
+        .preset-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 1rem 0;
+        }
+
+        .preset-btn {
+            background: rgba(124, 252, 0, 0.1);
+            color: var(--green);
+            border: 2px solid var(--green);
+        }
+
+        .download-btn {
+            display: block;
+            margin: 1rem auto;
+            background: var(--gold);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔳 高级二维码工坊</h1>
+        
+        <div class="controls">
+            <input type="text" id="qrContent" placeholder="输入内容或网址">
+            <input type="color" id="colorDark" value="#000000">
+            <input type="color" id="colorLight" value="#ffffff">
+            <input type="range" id="qrSize" min="100" max="500" value="200">
+            <input type="file" id="logoUpload" accept="image/*">
+            <select id="presetSelect">
+                <option value="custom">自定义</option>
+                <option value="website">网站链接</option>
+                <option value="wifi">WiFi配置</option>
+                <option value="contact">联系方式</option>
+            </select>
+            <button onclick="generateQR()">生成二维码</button>
+        </div>
+
+        <div class="preset-buttons">
+            <button class="preset-btn" onclick="applyPreset('website')">网站预设</button>
+            <button class="preset-btn" onclick="applyPreset('wifi')">WiFi预设</button>
+            <button class="preset-btn" onclick="applyPreset('contact')">联系预设</button>
+        </div>
+
+        <div class="qr-container">
+            <div id="qrcode"></div>
+            <img id="logoPreview" class="logo-overlay" alt="LOGO">
+        </div>
+
+        <button class="download-btn" onclick="downloadQR()">下载二维码</button>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+    <script>
+        let currentQR = null;
+        let currentLogo = null;
+
+        const presets = {
+            website: {
+                colorDark: '#2c3e50',
+                colorLight: '#ecf0f1',
+                size: 250
+            },
+            wifi: {
+                colorDark: '#27ae60',
+                colorLight: '#2ecc71',
+                size: 220
+            },
+            contact: {
+                colorDark: '#2980b9',
+                colorLight: '#3498db',
+                size: 300
+            }
+        };
+
+        function applyPreset(type) {
+            const preset = presets[type];
+            document.getElementById('colorDark').value = preset.colorDark;
+            document.getElementById('colorLight').value = preset.colorLight;
+            document.getElementById('qrSize').value = preset.size;
+            document.getElementById('presetSelect').value = type;
+            generateQR();
+        }
+
+        function generateQR() {
+            const content = document.getElementById('qrContent').value;
+            if (!content) {
+                alert('请输入要生成的内容');
+                return;
+            }
+
+            const config = {
+                text: content,
+                width: parseInt(document.getElementById('qrSize').value),
+                height: parseInt(document.getElementById('qrSize').value),
+                colorDark: document.getElementById('colorDark').value,
+                colorLight: document.getElementById('colorLight').value,
+                correctLevel: QRCode.CorrectLevel.H
+            };
+
+            const container = document.getElementById('qrcode');
+            container.innerHTML = '';
+            
+            currentQR = new QRCode(container, config);
+
+            // 添加LOGO
+            if (currentLogo) {
+                const logo = document.getElementById('logoPreview');
+                logo.style.display = 'block';
+                logo.src = currentLogo;
+            }
+        }
+
+        // LOGO上传处理
+        document.getElementById('logoUpload').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    currentLogo = event.target.result;
+                    generateQR();
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // 尺寸调节实时预览
+        document.getElementById('qrSize').addEventListener('input', function() {
+            if (currentQR) generateQR();
+        });
+
+        // 下载功能
+        function downloadQR() {
+            if (!currentQR) {
+                alert('请先生成二维码');
+                return;
+            }
+
+            const canvas = document.querySelector('#qrcode canvas');
+            const logo = document.getElementById('logoPreview');
+            
+            // 合并LOGO
+            const ctx = canvas.getContext('2d');
+            if (logo.src) {
+                const img = new Image();
+                img.src = logo.src;
+                img.onload = function() {
+                    const logoSize = canvas.width * 0.2;
+                    ctx.drawImage(img, 
+                        canvas.width/2 - logoSize/2,
+                        canvas.height/2 - logoSize/2,
+                        logoSize,
+                        logoSize
+                    );
+                    finalizeDownload(canvas);
+                };
+            } else {
+                finalizeDownload(canvas);
+            }
+        }
+
+        function finalizeDownload(canvas) {
+            const link = document.createElement('a');
+            link.download = 'qrcode.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+
+        // 初始化
+        document.getElementById('qrContent').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') generateQR();
+        });
+    </script>
+</body>
+</html>
