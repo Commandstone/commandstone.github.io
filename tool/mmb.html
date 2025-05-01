@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>安全密码管家</title>
+    <style>
+        :root {
+            --gold: #FFD700;
+            --green: #7CFC00;
+        }
+
+        body {
+            margin: 0;
+            padding: 2rem;
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--gold) 0%, var(--green) 100%);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .password-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        input {
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        input:focus {
+            border-color: var(--green);
+            outline: none;
+            box-shadow: 0 0 8px rgba(124, 252, 0, 0.3);
+        }
+
+        button {
+            background: var(--green);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background: var(--gold);
+            transform: translateY(-2px);
+        }
+
+        .password-list {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .password-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .password-field {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .toggle-password {
+            cursor: pointer;
+            color: var(--green);
+            user-select: none;
+        }
+
+        .copy-btn {
+            background: rgba(124, 252, 0, 0.1);
+            color: var(--green);
+            padding: 6px 12px;
+            border-radius: 20px;
+        }
+
+        .actions {
+            display: flex;
+            gap: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔒 安全密码管家</h1>
+        
+        <div class="password-form">
+            <input type="text" id="site" placeholder="网站/应用名称">
+            <input type="text" id="username" placeholder="用户名/邮箱">
+            <input type="password" id="password" placeholder="密码">
+            <button onclick="addPassword()">添加密码</button>
+        </div>
+
+        <div class="password-list" id="passwordList"></div>
+    </div>
+
+    <script>
+        // 初始化本地存储
+        let passwords = JSON.parse(localStorage.getItem('passwords')) || [];
+
+        // 添加密码
+        function addPassword() {
+            const site = document.getElementById('site').value;
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            if (site && username && password) {
+                const newPassword = {
+                    id: Date.now(),
+                    site,
+                    username,
+                    password: btoa(password) // 简单base64编码
+                };
+
+                passwords.push(newPassword);
+                updateStorage();
+                renderList();
+                clearForm();
+            }
+        }
+
+        // 渲染列表
+        function renderList() {
+            const list = document.getElementById('passwordList');
+            list.innerHTML = passwords.map(pwd => `
+                <div class="password-item" data-id="${pwd.id}">
+                    <div>
+                        <h3>${pwd.site}</h3>
+                        <small>${pwd.username}</small>
+                    </div>
+                    <div class="password-field">
+                        <span class="password-value">••••••••</span>
+                        <span class="toggle-password" onclick="togglePassword(${pwd.id})">👁️</span>
+                        <button class="copy-btn" onclick="copyPassword('${pwd.password}')">复制</button>
+                    </div>
+                    <div class="actions">
+                        <button onclick="deletePassword(${pwd.id})">删除</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 切换密码可见性
+        function togglePassword(id) {
+            const item = passwords.find(p => p.id === id);
+            const passwordSpan = document.querySelector(`[data-id="${id}"] .password-value`);
+            
+            if (passwordSpan.textContent === '••••••••') {
+                passwordSpan.textContent = atob(item.password);
+            } else {
+                passwordSpan.textContent = '••••••••';
+            }
+        }
+
+        // 复制密码
+        function copyPassword(encodedPassword) {
+            navigator.clipboard.writeText(atob(encodedPassword));
+            alert('密码已复制到剪贴板');
+        }
+
+        // 删除条目
+        function deletePassword(id) {
+            passwords = passwords.filter(p => p.id !== id);
+            updateStorage();
+            renderList();
+        }
+
+        // 更新存储
+        function updateStorage() {
+            localStorage.setItem('passwords', JSON.stringify(passwords));
+        }
+
+        // 清空表单
+        function clearForm() {
+            document.getElementById('site').value = '';
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+        }
+
+        // 初始化渲染
+        renderList();
+    </script>
+</body>
+</html>
