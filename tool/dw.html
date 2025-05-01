@@ -1,1 +1,288 @@
 
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>多功能单位转换器</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        body {
+            background: #f0f2f5;
+            padding: 2rem;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #1a73e8;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .converter-box {
+            display: grid;
+            gap: 1rem;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        label {
+            font-weight: 500;
+            color: #444;
+        }
+
+        input, select {
+            padding: 0.8rem;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #1a73e8;
+        }
+
+        .unit-type {
+            margin: 1.5rem 0;
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .unit-type button {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 20px;
+            background: #e8f0fe;
+            color: #1a73e8;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .unit-type button.active {
+            background: #1a73e8;
+            color: white;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            body {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>多功能单位转换器</h1>
+        
+        <div class="unit-type">
+            <button onclick="changeUnitType('length')" class="active">长度</button>
+            <button onclick="changeUnitType('temperature')">温度</button>
+            <button onclick="changeUnitType('weight')">重量</button>
+        </div>
+
+        <div class="converter-box" id="converterBox">
+            <!-- 长度转换 -->
+            <div class="input-group">
+                <input type="number" id="meter" placeholder="输入值" oninput="convert('length', 'meter')">
+                <select id="meterUnit">
+                    <option value="meter">米</option>
+                    <option value="kilometer">千米</option>
+                    <option value="centimeter">厘米</option>
+                    <option value="millimeter">毫米</option>
+                    <option value="mile">英里</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <input type="number" id="feet" placeholder="输入值" oninput="convert('length', 'feet')">
+                <select id="feetUnit">
+                    <option value="foot">英尺</option>
+                    <option value="inch">英寸</option>
+                    <option value="yard">码</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentUnitType = 'length';
+
+        // 单位转换公式
+        const conversions = {
+            length: {
+                meter: {
+                    kilometer: val => val / 1000,
+                    centimeter: val => val * 100,
+                    millimeter: val => val * 1000,
+                    mile: val => val / 1609.34,
+                    foot: val => val * 3.28084,
+                    inch: val => val * 39.3701,
+                    yard: val => val * 1.09361
+                },
+                foot: {
+                    meter: val => val / 3.28084,
+                    inch: val => val * 12,
+                    yard: val => val / 3
+                }
+            },
+            temperature: {
+                celsius: {
+                    fahrenheit: val => (val * 9/5) + 32,
+                    kelvin: val => val + 273.15
+                }
+            },
+            weight: {
+                kilogram: {
+                    gram: val => val * 1000,
+                    pound: val => val * 2.20462,
+                    ounce: val => val * 35.274
+                }
+            }
+        };
+
+        function changeUnitType(type) {
+            currentUnitType = type;
+            document.querySelectorAll('.unit-type button').forEach(btn => 
+                btn.classList.remove('active'));
+            event.target.classList.add('active');
+            updateConverterUI();
+        }
+
+        function updateConverterUI() {
+            const box = document.getElementById('converterBox');
+            box.innerHTML = getConverterHTML(currentUnitType);
+        }
+
+        function getConverterHTML(type) {
+            const templates = {
+                length: `
+                    <div class="input-group">
+                        <input type="number" placeholder="输入值" oninput="convert('length', 'meter')">
+                        <select onchange="convert('length', 'meter')">
+                            <option value="meter">米</option>
+                            <option value="kilometer">千米</option>
+                            <option value="centimeter">厘米</option>
+                            <option value="millimeter">毫米</option>
+                            <option value="mile">英里</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <input type="number" placeholder="输入值" oninput="convert('length', 'feet')">
+                        <select onchange="convert('length', 'feet')">
+                            <option value="foot">英尺</option>
+                            <option value="inch">英寸</option>
+                            <option value="yard">码</option>
+                        </select>
+                    </div>
+                `,
+                temperature: `
+                    <div class="input-group">
+                        <input type="number" placeholder="摄氏度" oninput="convertTemperature('celsius')">
+                        <select disabled>
+                            <option>摄氏度</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <input type="number" placeholder="华氏度" oninput="convertTemperature('fahrenheit')">
+                        <select disabled>
+                            <option>华氏度</option>
+                        </select>
+                    </div>
+                `,
+                weight: `
+                    <div class="input-group">
+                        <input type="number" placeholder="千克" oninput="convertWeight('kilogram')">
+                        <select disabled>
+                            <option>千克</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <input type="number" placeholder="磅" oninput="convertWeight('pound')">
+                        <select disabled>
+                            <option>磅</option>
+                        </select>
+                    </div>
+                `
+            };
+            return templates[type];
+        }
+
+        function convert(type, fromGroup) {
+            const input = event.target;
+            const value = parseFloat(input.value);
+            
+            if (isNaN(value)) return;
+
+            const group = input.parentElement.parentElement;
+            const converterBox = group.parentElement;
+            const otherGroups = [...converterBox.children].filter(c => c !== group);
+
+            otherGroups.forEach(otherGroup => {
+                const otherInput = otherGroup.querySelector('input');
+                const otherSelect = otherGroup.querySelector('select');
+                const fromUnit = group.querySelector('select').value;
+                const toUnit = otherSelect.value;
+                
+                const conversion = conversions[type][fromUnit][toUnit];
+                if (conversion) {
+                    otherInput.value = conversion(value).toFixed(4);
+                }
+            });
+        }
+
+        function convertTemperature(fromUnit) {
+            const value = parseFloat(event.target.value);
+            if (isNaN(value)) return;
+
+            const converterBox = document.getElementById('converterBox');
+            const inputs = converterBox.querySelectorAll('input');
+
+            if (fromUnit === 'celsius') {
+                inputs[1].value = (value * 9/5 + 32).toFixed(2);
+            } else {
+                inputs[0].value = ((value - 32) * 5/9).toFixed(2);
+            }
+        }
+
+        function convertWeight(fromUnit) {
+            const value = parseFloat(event.target.value);
+            if (isNaN(value)) return;
+
+            const converterBox = document.getElementById('converterBox');
+            const inputs = converterBox.querySelectorAll('input');
+
+            if (fromUnit === 'kilogram') {
+                inputs[1].value = (value * 2.20462).toFixed(4);
+            } else {
+                inputs[0].value = (value / 2.20462).toFixed(4);
+            }
+        }
+    </script>
+</body>
+</html>
