@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>密码生成器</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        body {
+            background: #1a1a1a;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: #2d2d2d;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 500px;
+        }
+
+        h1 {
+            color: #00ff88;
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .password-display {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+
+        #password {
+            width: 100%;
+            padding: 1rem;
+            font-size: 1.2rem;
+            border: 2px solid #3d3d3d;
+            border-radius: 8px;
+            background: #1f1f1f;
+            color: #00ff88;
+            outline: none;
+        }
+
+        #copyBtn {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #00ff88;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        #copyBtn:hover {
+            opacity: 0.8;
+        }
+
+        .options {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .option-group {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.8rem;
+            background: #363636;
+            border-radius: 8px;
+        }
+
+        label {
+            color: #fff;
+            font-size: 0.9rem;
+        }
+
+        #length {
+            width: 60px;
+            padding: 0.3rem;
+            background: #1f1f1f;
+            border: 1px solid #3d3d3d;
+            color: #00ff88;
+            border-radius: 4px;
+        }
+
+        #generateBtn {
+            width: 100%;
+            padding: 1rem;
+            background: #00ff88;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        #generateBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 255, 136, 0.3);
+        }
+
+        .copied-notice {
+            color: #00ff88;
+            text-align: center;
+            margin-top: 1rem;
+            opacity: 0;
+            transition: 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>密码生成器</h1>
+        
+        <div class="password-display">
+            <input type="text" id="password" readonly>
+            <button id="copyBtn" onclick="copyPassword()">复制</button>
+        </div>
+
+        <div class="options">
+            <div class="option-group">
+                <label>密码长度：</label>
+                <input type="number" id="length" min="6" max="50" value="12">
+            </div>
+            
+            <div class="option-group">
+                <label>包含大写字母（A-Z）</label>
+                <input type="checkbox" id="uppercase" checked>
+            </div>
+            
+            <div class="option-group">
+                <label>包含小写字母（a-z）</label>
+                <input type="checkbox" id="lowercase" checked>
+            </div>
+            
+            <div class="option-group">
+                <label>包含数字（0-9）</label>
+                <input type="checkbox" id="numbers" checked>
+            </div>
+            
+            <div class="option-group">
+                <label>包含符号（!@#$%^&*）</label>
+                <input type="checkbox" id="symbols">
+            </div>
+        </div>
+
+        <button id="generateBtn" onclick="generatePassword()">生成密码</button>
+        <div class="copied-notice" id="copiedNotice">已复制到剪贴板！</div>
+    </div>
+
+    <script>
+        const characters = {
+            uppercase: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+            lowercase: 'abcdefghijklmnopqrstuvwxyz',
+            numbers: '0123456789',
+            symbols: '!@#$%^&*()_+-=[]{}|;:,.<>?'
+        };
+
+        function generatePassword() {
+            const length = document.getElementById('length').value;
+            const options = {
+                uppercase: document.getElementById('uppercase').checked,
+                lowercase: document.getElementById('lowercase').checked,
+                numbers: document.getElementById('numbers').checked,
+                symbols: document.getElementById('symbols').checked
+            };
+
+            let chars = '';
+            for (const [key, value] of Object.entries(options)) {
+                if (value) chars += characters[key];
+            }
+
+            if (!chars) {
+                alert('请至少选择一种字符类型！');
+                return;
+            }
+
+            let password = '';
+            for (let i = 0; i < length; i++) {
+                const randomIndex = Math.floor(Math.random() * chars.length);
+                password += chars[randomIndex];
+            }
+
+            document.getElementById('password').value = password;
+        }
+
+        function copyPassword() {
+            const passwordField = document.getElementById('password');
+            passwordField.select();
+            document.execCommand('copy');
+            
+            const notice = document.getElementById('copiedNotice');
+            notice.style.opacity = '1';
+            setTimeout(() => notice.style.opacity = '0', 2000);
+        }
+
+        // 初始化生成密码
+        generatePassword();
+    </script>
+</body>
+</html>
