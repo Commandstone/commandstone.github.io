@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>光影图像工坊 Pro</title>
+    <style>
+        :root {
+            --gold: #FFD700;
+            --green: #7CFC00;
+        }
+
+        body {
+            margin: 0;
+            padding: 2rem;
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--gold) 0%, var(--green) 100%);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .editor-panel {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .controls {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .filter-control {
+            display: grid;
+            grid-template-columns: 1fr 60px;
+            align-items: center;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            background: #ddd;
+            border-radius: 3px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: var(--green);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        button {
+            background: var(--green);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background: var(--gold);
+            transform: translateY(-2px);
+        }
+
+        .preview-area {
+            position: relative;
+            background: #f0f0f0;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        #previewCanvas {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .value-display {
+            display: inline-block;
+            width: 50px;
+            text-align: center;
+            background: rgba(124, 252, 0, 0.1);
+            border-radius: 4px;
+            padding: 4px;
+        }
+
+        .preset-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 1rem 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🖼️ 光影图像工坊 Pro</h1>
+        
+        <input type="file" id="imageUpload" accept="image/*">
+        <div class="preset-buttons">
+            <button onclick="applyPreset('vintage')">复古滤镜</button>
+            <button onclick="applyPreset('cinematic')">电影效果</button>
+            <button onclick="applyPreset('blackwhite')">黑白风格</button>
+        </div>
+
+        <div class="editor-panel">
+            <div class="controls">
+                <div class="filter-control">
+                    <label>亮度：</label>
+                    <input type="range" id="brightness" min="-100" max="100" value="0">
+                    <span class="value-display" id="brightnessValue">0</span>
+                </div>
+                
+                <div class="filter-control">
+                    <label>对比度：</label>
+                    <input type="range" id="contrast" min="-100" max="100" value="0">
+                    <span class="value-display" id="contrastValue">0</span>
+                </div>
+
+                <div class="filter-control">
+                    <label>饱和度：</label>
+                    <input type="range" id="saturate" min="0" max="200" value="100">
+                    <span class="value-display" id="saturateValue">100</span>
+                </div>
+
+                <div class="filter-control">
+                    <label>灰度：</label>
+                    <input type="range" id="grayscale" min="0" max="100" value="0">
+                    <span class="value-display" id="grayscaleValue">0</span>
+                </div>
+
+                <div class="filter-control">
+                    <label>旋转：</label>
+                    <input type="range" id="rotate" min="0" max="360" value="0">
+                    <span class="value-display" id="rotateValue">0°</span>
+                </div>
+
+                <div class="filter-control">
+                    <label>缩放：</label>
+                    <input type="range" id="scale" min="50" max="200" value="100">
+                    <span class="value-display" id="scaleValue">100%</span>
+                </div>
+
+                <button onclick="resetFilters()">重置效果</button>
+                <button onclick="downloadImage()">下载图片</button>
+            </div>
+
+            <div class="preview-area">
+                <canvas id="previewCanvas"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let originalImage = null;
+        const canvas = document.getElementById('previewCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // 初始化事件监听
+        document.getElementById('imageUpload').addEventListener('change', loadImage);
+        document.querySelectorAll('input[type="range"]').forEach(input => {
+            input.addEventListener('input', updateFilters);
+        });
+
+        // 加载图片
+        function loadImage(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    originalImage = new Image();
+                    originalImage.onload = function() {
+                        canvas.width = originalImage.width;
+                        canvas.height = originalImage.height;
+                        drawImage();
+                    }
+                    originalImage.src = event.target.result;
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // 绘制图片
+        function drawImage() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const brightness = document.getElementById('brightness').value;
+            const contrast = document.getElementById('contrast').value;
+            const saturate = document.getElementById('saturate').value;
+            const grayscale = document.getElementById('grayscale').value;
+            const rotate = document.getElementById('rotate').value;
+            const scale = document.getElementById('scale').value / 100;
+
+            ctx.filter = `
+                brightness(${100 + Number(brightness)}%)
+                contrast(${100 + Number(contrast)}%)
+                saturate(${saturate}%)
+                grayscale(${grayscale}%)
+            `;
+
+            ctx.save();
+            ctx.translate(canvas.width/2, canvas.height/2);
+            ctx.rotate(rotate * Math.PI / 180);
+            ctx.scale(scale, scale);
+            ctx.drawImage(
+                originalImage, 
+                -originalImage.width/2,
+                -originalImage.height/2,
+                originalImage.width,
+                originalImage.height
+            );
+            ctx.restore();
+
+            // 更新数值显示
+            document.getElementById('brightnessValue').textContent = brightness;
+            document.getElementById('contrastValue').textContent = contrast;
+            document.getElementById('saturateValue').textContent = saturate;
+            document.getElementById('grayscaleValue').textContent = grayscale;
+            document.getElementById('rotateValue').textContent = rotate + '°';
+            document.getElementById('scaleValue').textContent = scale * 100 + '%';
+        }
+
+        // 更新滤镜
+        function updateFilters() {
+            if (originalImage) drawImage();
+        }
+
+        // 重置效果
+        function resetFilters() {
+            document.getElementById('brightness').value = 0;
+            document.getElementById('contrast').value = 0;
+            document.getElementById('saturate').value = 100;
+            document.getElementById('grayscale').value = 0;
+            document.getElementById('rotate').value = 0;
+            document.getElementById('scale').value = 100;
+            drawImage();
+        }
+
+        // 下载图片
+        function downloadImage() {
+            if (!originalImage) {
+                alert('请先上传图片');
+                return;
+            }
+            
+            const link = document.createElement('a');
+            link.download = 'processed-image.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+
+        // 预设滤镜
+        const presets = {
+            vintage: {
+                brightness: -20,
+                contrast: 15,
+                saturate: 80,
+                grayscale: 30
+            },
+            cinematic: {
+                brightness: -10,
+                contrast: 25,
+                saturate: 120,
+                grayscale: 10
+            },
+            blackwhite: {
+                brightness: 0,
+                contrast: 20,
+                saturate: 0,
+                grayscale: 100
+            }
+        };
+
+        function applyPreset(type) {
+            const preset = presets[type];
+            document.getElementById('brightness').value = preset.brightness;
+            document.getElementById('contrast').value = preset.contrast;
+            document.getElementById('saturate').value = preset.saturate;
+            document.getElementById('grayscale').value = preset.grayscale;
+            drawImage();
+        }
+    </script>
+</body>
+</html>
