@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>色彩魔法实验室</title>
+    <style>
+        :root {
+            --primary: #FFD700; /* 黄色 */
+            --secondary: #7CFC00; /* 绿色 */
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            font-family: 'Segoe UI', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+        }
+
+        .lab-container {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            max-width: 800px;
+            width: 90%;
+        }
+
+        .color-picker {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        #colorWheel {
+            width: 250px;
+            height: 250px;
+            border-radius: 50%;
+            border: 3px solid #fff;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+            cursor: crosshair;
+        }
+
+        .color-info {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .color-preview {
+            width: 100%;
+            height: 80px;
+            border-radius: 10px;
+            transition: all 0.3s;
+            border: 2px solid #fff;
+        }
+
+        .value-box {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        input[type="text"] {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            width: 120px;
+        }
+
+        button {
+            background: var(--secondary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .palette {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .color-card {
+            height: 60px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .color-card:hover {
+            transform: scale(1.05);
+        }
+
+        .color-card::after {
+            content: attr(data-value);
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 3px;
+            font-size: 0.8rem;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .color-card:hover::after {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎨 色彩魔法实验室</h1>
+    
+    <div class="lab-container">
+        <div class="color-picker">
+            <canvas id="colorWheel"></canvas>
+            
+            <div class="color-info">
+                <div class="color-preview" id="colorPreview"></div>
+                <div class="value-box">
+                    <input type="text" id="hexValue" readonly>
+                    <button onclick="copyHex()">复制HEX</button>
+                </div>
+                <div class="value-box">
+                    <input type="text" id="rgbValue" readonly>
+                    <button onclick="copyRGB()">复制RGB</button>
+                </div>
+                <button onclick="generateRandom()">随机颜色</button>
+            </div>
+        </div>
+
+        <h3>配色方案推荐</h3>
+        <div class="palette" id="palette"></div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('colorWheel');
+        const ctx = canvas.getContext('2d');
+        let currentColor = '#FFD700';
+
+        // 创建色轮
+        function createColorWheel() {
+            const radius = canvas.width / 2;
+            const imageData = ctx.createImageData(canvas.width, canvas.height);
+            
+            for (let x = 0; x < canvas.width; x++) {
+                for (let y = 0; y < canvas.height; y++) {
+                    const dx = x - radius;
+                    const dy = y - radius;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance > radius) continue;
+                    
+                    const angle = Math.atan2(dy, dx);
+                    const hue = angle * 180 / Math.PI + 180;
+                    const saturation = distance / radius * 100;
+                    
+                    const rgb = hslToRgb(hue, saturation, 50);
+                    const index = (x + y * canvas.width) * 4;
+                    
+                    imageData.data[index] = rgb[0];
+                    imageData.data[index + 1] = rgb[1];
+                    imageData.data[index + 2] = rgb[2];
+                    imageData.data[index + 3] = 255;
+                }
+            }
+            ctx.putImageData(imageData, 0, 0);
+        }
+
+        // HSL转RGB
+        function hslToRgb(h, s, l) {
+            h /= 360;
+            s /= 100;
+            l /= 100;
+            
+            let r, g, b;
+            if (s === 0) {
+                r = g = b = l;
+            } else {
+                const hue2rgb = (p, q, t) => {
+                    if (t < 0) t += 1;
+                    if (t > 1) t -= 1;
+                    if (t < 1/6) return p + (q - p) * 6 * t;
+                    if (t < 1/2) return q;
+                    if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+                    return p;
+                };
+                
+                const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+                const p = 2 * l - q;
+                r = hue2rgb(p, q, h + 1/3);
+                g = hue2rgb(p, q, h);
+                b = hue2rgb(p, q, h - 1/3);
+            }
+            
+            return [
+                Math.round(r * 255),
+                Math.round(g * 255),
+                Math.round(b * 255)
+            ];
+        }
+
+        // 更新颜色信息
+        function updateColor(rgb) {
+            currentColor = `#${rgb.map(v => v.toString(16).padStart(2, '0')).join('')}`;
+            document.getElementById('colorPreview').style.backgroundColor = currentColor;
+            document.getElementById('hexValue').value = currentColor;
+            document.getElementById('rgbValue').value = `rgb(${rgb.join(', ')})`;
+            generatePalette(rgb);
+        }
+
+        // 生成配色方案
+        function generatePalette(baseRGB) {
+            const palette = document.getElementById('palette');
+            palette.innerHTML = '';
+            
+            const variations = [
+                [0, 0, 30],    // 更暗
+                [30, 0, 0],    // 更亮
+                [0, 30, 0],    // 增加饱和度
+                [0, -30, 0],   // 降低饱和度
+                [120, 0, 0]    // 互补色
+            ];
+
+            variations.forEach(v => {
+                const newColor = baseRGB.map((c, i) => 
+                    Math.min(255, Math.max(0, c + v[i]))
+                );
+                const colorCard = document.createElement('div');
+                colorCard.className = 'color-card';
+                colorCard.style.backgroundColor = `rgb(${newColor.join(',')})`;
+                colorCard.dataset.value = `rgb(${newColor.join(',')})`;
+                colorCard.onclick = () => updateColor(newColor);
+                palette.appendChild(colorCard);
+            });
+        }
+
+        // 随机颜色生成
+        function generateRandom() {
+            const randomRGB = [
+                Math.floor(Math.random() * 256),
+                Math.floor(Math.random() * 256),
+                Math.floor(Math.random() * 256)
+            ];
+            updateColor(randomRGB);
+        }
+
+        // 复制功能
+        function copyHex() {
+            navigator.clipboard.writeText(currentColor);
+        }
+
+        function copyRGB() {
+            navigator.clipboard.writeText(document.getElementById('rgbValue').value);
+        }
+
+        // 初始化
+        createColorWheel();
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const pixel = ctx.getImageData(x, y, 1, 1).data;
+            updateColor([pixel[0], pixel[1], pixel[2]]);
+        });
+
+        generateRandom();
+    </script>
+</body>
+</html>
