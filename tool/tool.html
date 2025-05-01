@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能工具库</title>
+    <style>
+        :root {
+            --gold: #FFD700;
+            --green: #7CFC00;
+            --transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        body {
+            margin: 0;
+            padding: 2rem;
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--gold) 0%, var(--green) 100%);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            color: #2c3e50;
+            animation: fadeIn 1s ease;
+        }
+
+        .tool-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .tool-card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            transition: var(--transition);
+            cursor: pointer;
+            transform-style: preserve-3d;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tool-card:hover {
+            transform: translateY(-10px) rotateX(5deg) rotateY(-5deg);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .tool-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 200%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.4),
+                transparent
+            );
+            transition: var(--transition);
+        }
+
+        .tool-card:hover::before {
+            left: 100%;
+        }
+
+        .card-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: var(--green);
+            transition: var(--transition);
+        }
+
+        .card-title {
+            color: #2c3e50;
+            margin: 0 0 1rem;
+            font-size: 1.5rem;
+        }
+
+        .card-description {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+
+        .launch-button {
+            background: var(--green);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .launch-button:hover {
+            background: var(--gold);
+            transform: translateX(10px);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+            
+            .tool-card {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔧 智能工具库</h1>
+        <p>选择您需要的专业工具</p>
+    </div>
+
+    <div class="tool-grid">
+        <!-- 单位转换工具 -->
+        <div class="tool-card" onclick="openTool('converter')">
+            <div class="card-icon">📐</div>
+            <h3 class="card-title">全能单位转换</h3>
+            <p class="card-description">支持长度、重量、温度、面积等多种单位类型的实时换算</p>
+            <button class="launch-button">立即使用 →</button>
+        </div>
+
+        <!-- 图形计算器 -->
+        <div class="tool-card" onclick="openTool('calculator')">
+            <div class="card-icon">🧮</div>
+            <h3 class="card-title">图形计算器</h3>
+            <p class="card-description">支持函数绘图、方程式求解和科学计算的高级计算工具</p>
+            <button class="launch-button">立即使用 →</button>
+        </div>
+
+        <!-- 颜色实验室 -->
+        <div class="tool-card" onclick="openTool('color-lab')">
+            <div class="card-icon">🎨</div>
+            <h3 class="card-title">颜色实验室</h3>
+            <p class="card-description">颜色选择、格式转换和配色方案生成的专业色彩工具</p>
+            <button class="launch-button">立即使用 →</button>
+        </div>
+
+        <!-- 数据分析工具 -->
+        <div class="tool-card" onclick="openTool('analytics')">
+            <div class="card-icon">📊</div>
+            <h3 class="card-title">数据分析</h3>
+            <p class="card-description">数据可视化、统计分析和图表生成的智能处理平台</p>
+            <button class="launch-button">立即使用 →</button>
+        </div>
+
+        <!-- 代码编辑器 -->
+        <div class="tool-card" onclick="openTool('editor')">
+            <div class="card-icon">💻</div>
+            <h3 class="card-title">云端编辑器</h3>
+            <p class="card-description">支持多种编程语言的在线代码编辑和执行环境</p>
+            <button class="launch-button">立即使用 →</button>
+        </div>
+
+        <!-- 图像处理器 -->
+        <div class="tool-card" onclick="openTool('image')">
+            <div class="card-icon">🖼️</div>
+            <h3 class="card-title">图像处理器</h3>
+            <p class="card-description">在线图片编辑、格式转换和滤镜应用的专业工具</p>
+            <button class="launch-button">立即使用 →</button>
+        </div>
+    </div>
+
+    <script>
+        function openTool(toolName) {
+            // 此处可添加实际跳转逻辑
+            const toolTitles = {
+                converter: "单位转换工具",
+                calculator: "图形计算器",
+                'color-lab': "颜色实验室",
+                analytics: "数据分析工具",
+                editor: "云端编辑器",
+                image: "图像处理器"
+            };
+            
+            alert(`正在加载 ${toolTitles[toolName]}...`);
+            // 实际使用时可替换为：
+            // window.location.href = `/${toolName}.html`;
+        }
+
+        // 添加卡片入场动画
+        document.querySelectorAll('.tool-card').forEach((card, index) => {
+            card.style.animation = `fadeIn 0.5s ease ${index * 0.1}s forwards`;
+            card.style.opacity = 0;
+        });
+    </script>
+</body>
+</html>
