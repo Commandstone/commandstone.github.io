@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据分析</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --gold: #FFD700;
+            --green: #7CFC00;
+        }
+
+        body {
+            margin: 0;
+            padding: 2rem;
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--gold) 0%, var(--green) 100%);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .controls {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        #dataTable {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        #dataTable th, #dataTable td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        #dataTable th {
+            background-color: rgba(124, 252, 0, 0.1);
+        }
+
+        .stat-card {
+            background: rgba(124, 252, 0, 0.1);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        button {
+            background: var(--green);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background: var(--gold);
+            transform: translateY(-2px);
+        }
+
+        .chart-container {
+            background: white;
+            padding: 1rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 数据分析平台</h1>
+        
+        <input type="file" id="fileUpload" accept=".csv,.xlsx">
+        <button onclick="resetData()">重置数据</button>
+        <button onclick="exportData()">导出报告</button>
+
+        <div class="dashboard">
+            <div class="controls">
+                <div class="stat-card">
+                    <h3>数据概览</h3>
+                    <div id="statsSummary"></div>
+                </div>
+                <div class="stat-card">
+                    <h3>分析维度</h3>
+                    <select id="analysisDimension" onchange="updateCharts()">
+                        <option value="">选择分析列</option>
+                    </select>
+                </div>
+                <div class="stat-card">
+                    <h3>快速统计</h3>
+                    <p id="rowCount">总行数：0</p>
+                    <p id="columnCount">总列数：0</p>
+                    <p id="dataType">数据类型：-</p>
+                </div>
+            </div>
+
+            <div>
+                <div class="chart-container">
+                    <canvas id="mainChart"></canvas>
+                </div>
+                <table id="dataTable"></table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let rawData = [];
+        let chartInstance = null;
+        const ctx = document.getElementById('mainChart').getContext('2d');
+
+        // 初始化图表
+        function initChart(labels, data) {
+            if (chartInstance) chartInstance.destroy();
+            
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '数值分布',
+                        data: data,
+                        backgroundColor: '#7CFC0055',
+                        borderColor: '#7CFC00',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        // 解析CSV文件
+        function parseCSV(text) {
+            const rows = text.split('\n');
+            const headers = rows[0].split(',').map(h => h.trim());
+            rawData = rows.slice(1).map(row => {
+                const values = row.split(',');
+                return headers.reduce((obj, key, i) => {
+                    obj[key] = isNaN(values[i]) ? values[i] : parseFloat(values[i]);
+                    return obj;
+                }, {});
+            });
+            return { headers, data: rawData };
+        }
+
+        // 更新统计信息
+        function updateStats(headers) {
+            document.getElementById('rowCount').textContent = `总行数：${rawData.length}`;
+            document.getElementById('columnCount').textContent = `总列数：${headers.length}`;
+            
+            const dimensionSelect = document.getElementById('analysisDimension');
+            dimensionSelect.innerHTML = headers.map(h => 
+                `<option value="${h}">${h}</option>`
+            ).join('');
+        }
+
+        // 生成数据表格
+        function renderTable(headers, data) {
+            const table = document.getElementById('dataTable');
+            table.innerHTML = `
+                <tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>
+                ${data.map(row => `
+                    <tr>${headers.map(h => `<td>${row[h]}</td>`).join('')}</tr>
+                `).join('')}
+            `;
+        }
+
+        // 文件上传处理
+        document.getElementById('fileUpload').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const { headers, data } = parseCSV(event.target.result);
+                    updateStats(headers);
+                    renderTable(headers, data.slice(0, 50)); // 显示前50行
+                    updateCharts();
+                };
+                reader.readAsText(file);
+            }
+        });
+
+        // 更新图表
+        function updateCharts() {
+            const dimension = document.getElementById('analysisDimension').value;
+            if (!dimension) return;
+
+            const values = rawData.map(row => row[dimension]);
+            const numericValues = values.filter(v => typeof v === 'number');
+            
+            if (numericValues.length > 0) {
+                const stats = {
+                    min: Math.min(...numericValues),
+                    max: Math.max(...numericValues),
+                    avg: numericValues.reduce((a, b) => a + b, 0) / numericValues.length,
+                    sum: numericValues.reduce((a, b) => a + b, 0)
+                };
+                
+                document.getElementById('statsSummary').innerHTML = `
+                    <p>最小值：${stats.min.toFixed(2)}</p>
+                    <p>最大值：${stats.max.toFixed(2)}</p>
+                    <p>平均值：${stats.avg.toFixed(2)}</p>
+                    <p>总计：${stats.sum.toFixed(2)}</p>
+                `;
+
+                initChart(
+                    Array.from({length: 10}, (_, i) => 
+                        `${stats.min + (stats.max - stats.min)/10 * i}-${stats.min + (stats.max - stats.min)/10 * (i+1)}`
+                    ),
+                    Array.from({length: 10}, (_, i) => 
+                        numericValues.filter(v => 
+                            v >= stats.min + (stats.max - stats.min)/10 * i && 
+                            v < stats.min + (stats.max - stats.min)/10 * (i+1)
+                        ).length
+                    )
+                );
+            }
+        }
+
+        // 重置数据
+        function resetData() {
+            rawData = [];
+            document.getElementById('fileUpload').value = '';
+            document.getElementById('dataTable').innerHTML = '';
+            if (chartInstance) chartInstance.destroy();
+            document.getElementById('statsSummary').innerHTML = '';
+        }
+
+        // 导出报告
+        function exportData() {
+            if (!rawData.length) {
+                alert('请先上传数据文件');
+                return;
+            }
+            
+            const link = document.createElement('a');
+            link.download = 'data-report.csv';
+            link.href = URL.createObjectURL(new Blob([
+                Object.keys(rawData[0]).join(',') + '\n' +
+                rawData.map(row => 
+                    Object.values(row).join(',')
+                ).join('\n')
+            ], { type: 'text/csv' }));
+            link.click();
+        }
+    </script>
+</body>
+</html>
