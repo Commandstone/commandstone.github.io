@@ -12,156 +12,221 @@
         }
 
         body {
-            background: linear-gradient(135deg, #ffeb3b, #4caf50);
-            font-family: 'Segoe UI', Arial, sans-serif;
-            line-height: 1.6;
-            min-height: 100vh;
+            background: #000;
+            color: #0f0;
+            font-family: 'Courier New', monospace;
+            overflow-x: hidden;
+        }
+
+        #matrix {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: -1;
         }
 
         nav {
-            background: rgba(255, 255, 255, 0.9);
-            padding: 1rem;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            background: rgba(0, 30, 0, 0.9);
+            padding: 1.5rem;
+            backdrop-filter: blur(5px);
         }
 
         nav ul {
             display: flex;
+            gap: 2rem;
             list-style: none;
-            max-width: 1200px;
-            margin: 0 auto;
+            justify-content: center;
         }
 
         nav a {
-            color: #2e7d32;
+            color: #0f0;
             text-decoration: none;
             padding: 0.5rem 1rem;
-            transition: all 0.3s ease;
+            border: 1px solid #0f03;
+            transition: all 0.3s;
         }
 
         nav a:hover {
-            background: #f1f8e9;
-            border-radius: 4px;
+            background: #0f02;
+            border-color: #0f0;
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 800px;
             margin: 2rem auto;
-            padding: 0 1rem;
+            padding: 2rem;
+            background: rgba(0, 20, 0, 0.8);
+            border: 1px solid #0f03;
+        }
+
+        .post-list {
+            display: grid;
+            gap: 1.5rem;
         }
 
         .post-card {
-            background: rgba(255, 255, 255, 0.9);
-            border-radius: 10px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.1);
-        }
-
-        .post-date {
-            color: #689f38;
-            font-size: 0.9rem;
-            margin-bottom: 0.5rem;
-        }
-
-        footer {
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            text-align: center;
-            padding: 1rem;
-            position: fixed;
-            bottom: 0;
-            width: 100%;
-        }
-
-        /* 关于页面样式 */
-        .about-section {
-            background: rgba(255, 255, 255, 0.9);
-            border-radius: 10px;
-            padding: 2rem;
-            margin: 2rem auto;
-            max-width: 800px;
-        }
-
-        /* 联系表单样式 */
-        .contact-form {
-            background: rgba(255, 255, 255, 0.9);
-            padding: 2rem;
-            border-radius: 10px;
-            max-width: 600px;
-            margin: 2rem auto;
-        }
-
-        input, textarea {
-            width: 100%;
-            padding: 0.5rem;
-            margin-bottom: 1rem;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-
-        button {
-            background: #4caf50;
-            color: white;
-            border: none;
-            padding: 0.8rem 1.5rem;
-            border-radius: 4px;
+            padding: 1.5rem;
+            border: 1px solid #0f03;
+            position: relative;
+            transition: transform 0.3s;
             cursor: pointer;
+            overflow: hidden;
         }
 
-        button:hover {
-            background: #45a049;
+        .post-card:hover {
+            transform: translateX(10px);
+            border-color: #0f0;
+        }
+
+        .post-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(0, 255, 0, 0.1),
+                transparent
+            );
+            transition: 0.5s;
+        }
+
+        .post-card:hover::before {
+            left: 100%;
+        }
+
+        .about-section {
+            display: none;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 2rem;
+            text-shadow: 0 0 10px #0f0;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 0.2rem 0.8rem;
+            background: #002200;
+            margin: 0.5rem 0.5rem 0 0;
+            border-radius: 3px;
+        }
+
+        .date {
+            color: #0f08;
+            font-size: 0.9rem;
         }
     </style>
 </head>
 <body>
-    <!-- 导航栏 -->
+    <canvas id="matrix"></canvas>
+
     <nav>
         <ul>
-            <li><a href="#home">主页</a></li>
-            <li><a href="#about">关于</a></li>
-            <li><a href="#contact">联系</a></li>
+            <li><a onclick="showSection('posts')">文章</a></li>
+            <li><a onclick="showSection('about')">关于</a></li>
         </ul>
     </nav>
 
-    <!-- 主页内容 -->
-    <main class="container" id="home">
-        <div class="post-card">
-            <p class="post-date">2023年10月25日</p>
-            <h2>我的第一篇博客文章</h2>
-            <p>这里是博客文章的摘要内容，点击阅读更多查看完整文章...</p>
-            <a href="#" style="color: #4caf50;">阅读更多 →</a>
-        </div>
+    <div class="container">
+        <!-- 文章列表 -->
+        <section id="posts-section">
+            <h1>📁 技术文章</h1>
+            <div class="post-list">
+                <div class="post-card">
+                    <div class="date">2023-10-25</div>
+                    <h2>JavaScript 闭包详解</h2>
+                    <div>
+                        <span class="tag">JavaScript</span>
+                        <span class="tag">编程基础</span>
+                    </div>
+                    <p style="margin-top:1rem;">深度解析闭包的工作原理及其在现代JavaScript开发中的应用...</p>
+                </div>
 
-        <div class="post-card">
-            <p class="post-date">2023年10月24日</p>
-            <h2>欢迎来到我的博客</h2>
-            <p>这是我的第一篇博客文章，我将在这里分享我的想法和经验...</p>
-            <a href="#" style="color: #4caf50;">阅读更多 →</a>
-        </div>
-    </main>
+                <div class="post-card">
+                    <div class="date">2023-10-24</div>
+                    <h2>Python 异步编程指南</h2>
+                    <div>
+                        <span class="tag">Python</span>
+                        <span class="tag">并发编程</span>
+                    </div>
+                    <p style="margin-top:1rem;">全面讲解asyncio库的使用方法和最佳实践...</p>
+                </div>
+            </div>
+        </section>
 
-    <!-- 关于页面 -->
-    <section class="about-section" id="about">
-        <h2>关于我</h2>
-        <img src="https://via.placeholder.com/200" alt="头像" style="border-radius: 50%; margin: 1rem 0;">
-        <p>我是一个热爱生活、喜欢分享的博主。在这里，我会记录我的学习历程、生活感悟和各种有趣的事物。</p>
-        <p>关注我，一起探索美好的数字世界！</p>
-    </section>
+        <!-- 关于页面 -->
+        <section id="about-section" class="about-section">
+            <h1>👨💻 关于本站</h1>
+            <div style="padding: 1.5rem; border: 1px solid #0f03; margin-top: 2rem;">
+                <p>这里是一个专注于技术分享的博客平台，主要涵盖：</p>
+                <ul style="margin: 1rem 2rem;">
+                    <li>编程语言研究</li>
+                    <li>算法与数据结构</li>
+                    <li>软件开发实践</li>
+                    <li>前沿技术探索</li>
+                </ul>
+                <div style="margin-top: 2rem;">
+                    <h3>技术栈标签</h3>
+                    <span class="tag">JavaScript</span>
+                    <span class="tag">Python</span>
+                    <span class="tag">Node.js</span>
+                    <span class="tag">Linux</span>
+                    <span class="tag">Docker</span>
+                </div>
+            </div>
+        </section>
+    </div>
 
-    <!-- 联系页面 -->
-    <section class="contact-form" id="contact">
-        <h2>联系我</h2>
-        <form>
-            <input type="text" placeholder="姓名" required>
-            <input type="email" placeholder="邮箱" required>
-            <textarea rows="5" placeholder="留言内容" required></textarea>
-            <button type="submit">发送消息</button>
-        </form>
-    </section>
+    <script>
+        // 代码雨特效
+        const canvas = document.getElementById('matrix');
+        const ctx = canvas.getContext('2d');
 
-    <!-- 页脚 -->
-    <footer>
-        <p>© 2025 CST博客</p>
-    </footer>
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+
+        const chars = '01';
+        const fontSize = 20;
+        const columns = canvas.width / fontSize;
+        const drops = new Array(Math.floor(columns)).fill(0);
+
+        function draw() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = '#0f0';
+            ctx.font = fontSize + 'px monospace';
+
+            for (let i = 0; i < drops.length; i++) {
+                const char = chars[Math.floor(Math.random() * chars.length)];
+                ctx.fillText(char, i * fontSize, drops[i] * fontSize);
+
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                drops[i]++;
+            }
+        }
+
+        // 页面切换
+        function showSection(section) {
+            document.getElementById('posts-section').style.display = 
+                section === 'posts' ? 'block' : 'none';
+            document.getElementById('about-section').style.display = 
+                section === 'about' ? 'block' : 'none';
+        }
+
+        // 初始化
+        setInterval(draw, 50);
+        window.addEventListener('resize', resizeCanvas);
+    </script>
 </body>
 </html>
