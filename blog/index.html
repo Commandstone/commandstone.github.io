@@ -29,6 +29,8 @@
             background: rgba(0, 30, 0, 0.9);
             padding: 1.5rem;
             backdrop-filter: blur(5px);
+            position: sticky;
+            top: 0;
         }
 
         nav ul {
@@ -44,6 +46,7 @@
             padding: 0.5rem 1rem;
             border: 1px solid #0f03;
             transition: all 0.3s;
+            cursor: pointer;
         }
 
         nav a:hover {
@@ -55,8 +58,6 @@
             max-width: 800px;
             margin: 2rem auto;
             padding: 2rem;
-            background: rgba(0, 20, 0, 0.8);
-            border: 1px solid #0f03;
         }
 
         .post-list {
@@ -67,10 +68,9 @@
         .post-card {
             padding: 1.5rem;
             border: 1px solid #0f03;
-            position: relative;
-            transition: transform 0.3s;
+            transition: all 0.3s;
             cursor: pointer;
-            overflow: hidden;
+            background: rgba(0, 20, 0, 0.8);
         }
 
         .post-card:hover {
@@ -78,34 +78,16 @@
             border-color: #0f0;
         }
 
-        .post-card::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(
-                90deg,
-                transparent,
-                rgba(0, 255, 0, 0.1),
-                transparent
-            );
-            transition: 0.5s;
-        }
-
-        .post-card:hover::before {
-            left: 100%;
-        }
-
-        .about-section {
+        .post-content {
             display: none;
+            background: rgba(0, 20, 0, 0.9);
+            padding: 2rem;
+            border: 1px solid #0f0;
+            margin-top: 2rem;
         }
 
-        h1 {
-            text-align: center;
-            margin-bottom: 2rem;
-            text-shadow: 0 0 10px #0f0;
+        .active-section {
+            display: block;
         }
 
         .tag {
@@ -120,6 +102,15 @@
             color: #0f08;
             font-size: 0.9rem;
         }
+
+        .back-btn {
+            margin-top: 1rem;
+            padding: 0.5rem 1rem;
+            background: #002200;
+            border: 1px solid #0f0;
+            color: #0f0;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -127,60 +118,84 @@
 
     <nav>
         <ul>
-            <li><a onclick="showSection('posts')">文章</a></li>
+            <li><a onclick="showSection('home')">主页</a></li>
             <li><a onclick="showSection('about')">关于</a></li>
         </ul>
     </nav>
 
     <div class="container">
-        <!-- 文章列表 -->
-        <section id="posts-section">
-            <h1>📁 技术文章</h1>
+        <!-- 主页内容 -->
+        <section id="home-section" class="active-section">
+            <h1>最新博客</h1>
             <div class="post-list">
-                <div class="post-card">
+                <div class="post-card" onclick="showPost('post1')">
                     <div class="date">2025-5-10</div>
-                    <h2>JavaScript 闭包详解</h2>
-                    <div>
-                        <span class="tag">JavaScript</span>
-                        <span class="tag">编程基础</span>
-                    </div>
-                    <p style="margin-top:1rem;">深度解析闭包的工作原理及其在现代JavaScript开发中的应用...</p>
-                </div>
-
-                <div class="post-card">
-                    <div class="date">2023-10-24</div>
-                    <h2>汪孜恒引起602班性别歧视</h2>
+                    <h2>602重大事件</h2>
                     <div>
                         <span class="tag">school</span>
                         <span class="tag">八卦</span>
                     </div>
-                    <p style="margin-top:1rem;">汪孜恒说“无鸡之谈”引起602班性别歧视</p>
+                    <p style="margin-top:1rem;">深入探讨汪孜恒案件...</p>
+                </div>
+
+                <div class="post-card" onclick="showPost('post2')">
+                    <div class="date">2023-10-27</div>
+                    <h2>Python Web开发</h2>
+                    <div>
+                        <span class="tag">Python</span>
+                        <span class="tag">Web开发</span>
+                    </div>
+                    <p style="margin-top:1rem;">使用Django框架构建现代化Web应用的最佳实践...</p>
                 </div>
             </div>
         </section>
 
         <!-- 关于页面 -->
-        <section id="about-section" class="about-section">
-            <h1>👨💻 关于本站</h1>
-            <div style="padding: 1.5rem; border: 1px solid #0f03; margin-top: 2rem;">
-                <p>这里是一个专注于技术分享的博客平台，主要涵盖：</p>
+        <section id="about-section" class="post-content">
+            <h1>关于我们</h1>
+            <div style="padding: 1rem;">
+                <p>这里是专注于前沿技术分享的编程博客，致力于提供：</p>
                 <ul style="margin: 1rem 2rem;">
-                    <li>编程语言研究</li>
-                    //<li>算法与数据结构</li>
-                    //<li>软件开发实践</li>
-                    //<li>前沿技术探索</li>
+                    <li>最新技术文章</li>
+                    <li>实用开发技巧</li>
+                    <li>项目实战经验</li>
+                    <li>行业趋势分析</li>
                 </ul>
-                <div style="margin-top: 2rem;">
-                    <h3>技术栈标签</h3>
-                    <span class="tag">JavaScript</span>
-                    <span class="tag">Python</span>
-                    <span class="tag">C++</span>
-                    <span class="tag">windows</span>
-                    <span class="tag">mcgh</span>
-                    <h3>特殊</h4>
-                    <span class="tag">school</span>
-                    <span class="tag">八卦</span>
-                </div>
+                <button class="back-btn" onclick="showSection('home')">返回首页</button>
+            </div>
+        </section>
+
+        <!-- 文章详情页 -->
+        <section id="post1" class="post-content">
+            <h1>JavaScript 设计模式</h1>
+            <div class="date">2025-5-10</div>
+            <div style="padding: 1rem;">
+                <h3>单例模式</h3>
+                <p>单例模式确保一个类只有一个实例，并提供一个全局访问点...</p>
+                <pre><code>class Singleton {
+    constructor() {
+        if (!Singleton.instance) {
+            Singleton.instance = this;
+        }
+        return Singleton.instance;
+    }
+}</code></pre>
+                <button class="back-btn" onclick="showSection('home')">返回列表</button>
+            </div>
+        </section>
+
+        <section id="post2" class="post-content">
+            <h1>Python Web开发</h1>
+            <div class="date">2023-10-27</div>
+            <div style="padding: 1rem;">
+                <h3>Django框架优势</h3>
+                <p>Django以其强大的ORM系统和内置管理界面著称...</p>
+                <pre><code># views.py
+from django.http import HttpResponse
+
+def index(request):
+    return HttpResponse("Hello, World!")</code></pre>
+                <button class="back-btn" onclick="showSection('home')">返回列表</button>
             </div>
         </section>
     </div>
@@ -219,12 +234,24 @@
             }
         }
 
-        // 页面切换
+        // 页面切换功能
         function showSection(section) {
-            document.getElementById('posts-section').style.display = 
-                section === 'posts' ? 'block' : 'none';
-            document.getElementById('about-section').style.display = 
-                section === 'about' ? 'block' : 'none';
+            document.querySelectorAll('.active-section').forEach(el => {
+                el.classList.remove('active-section');
+            });
+            
+            if (section === 'home') {
+                document.getElementById('home-section').classList.add('active-section');
+            } else if (section === 'about') {
+                document.getElementById('about-section').classList.add('active-section');
+            }
+        }
+
+        function showPost(postId) {
+            document.querySelectorAll('.active-section').forEach(el => {
+                el.classList.remove('active-section');
+            });
+            document.getElementById(postId).classList.add('active-section');
         }
 
         // 初始化
