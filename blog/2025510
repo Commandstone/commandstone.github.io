@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>博客</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #000;
+            color: #0f0;
+            font-family: 'Courier New', monospace;
+            overflow-x: hidden;
+        }
+
+        #matrix {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: -1;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.7);
+        }
+
+        header {
+            text-align: center;
+            padding: 50px 0;
+            border-bottom: 2px solid #0f0;
+        }
+
+        nav {
+            padding: 20px 0;
+        }
+
+        nav a {
+            color: #0f0;
+            text-decoration: none;
+            margin: 0 15px;
+            font-size: 1.2em;
+        }
+
+        .post {
+            margin: 40px 0;
+            padding: 20px;
+            border: 1px solid #0f0;
+            border-radius: 5px;
+        }
+
+        .post h2 {
+            color: #0f0;
+            margin-bottom: 15px;
+        }
+
+        .post p {
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            border-top: 2px solid #0f0;
+            margin-top: 50px;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="matrix"></canvas>
+    
+    <div class="container">
+        <header>
+            <h1>黑客博客</h1>
+            <p>数字世界的观察与思考</p>
+        </header>
+
+        <nav>
+            <a href="#">首页</a>
+            <a href="#">文章</a>
+            <a href="#">关于</a>
+            <a href="#">联系</a>
+        </nav>
+
+        <main>
+            <article class="post">
+                <h2>如何保护你的数字隐私</h2>
+                <p>在当今数字时代，隐私保护变得比以往任何时候都更加重要。我们需要采取各种措施来保护个人信息...</p>
+                <p>发布于 2023年10月15日</p>
+            </article>
+
+            <article class="post">
+                <h2>人工智能的伦理挑战</h2>
+                <p>随着AI技术的快速发展，我们面临着诸多伦理问题需要解决。从算法偏见到自主武器系统...</p>
+                <p>发布于 2025年5月10日</p>
+            </article>
+        </main>
+
+        <footer>
+            <p>© 2025 CST博客 - 遵循MIT协议开源</p>
+        </footer>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('matrix');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const chars = 'アァカサタナハマヤャラワガザダバパイィキシチニヒミリヰギジヂビピウゥクスツヌフムユュルグズブヅプエェケセテネヘメレヱゲゼデベペオォコソトノホモヨョロヲゴゾドボポヴッンabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        const fontSize = 14;
+        const columns = canvas.width / fontSize;
+        const drops = [];
+
+        for (let i = 0; i < columns; i++) {
+            drops[i] = 1;
+        }
+
+        function draw() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.fillStyle = '#0F0';
+            ctx.font = fontSize + 'px monospace';
+
+            for (let i = 0; i < drops.length; i++) {
+                const text = chars[Math.floor(Math.random() * chars.length)];
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                drops[i]++;
+            }
+        }
+
+        setInterval(draw, 50);
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>
