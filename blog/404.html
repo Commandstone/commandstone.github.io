@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - 页面未找到</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f9d423 0%, #4ecdc4 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .container {
+            text-align: center;
+            padding: 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .error-code {
+            font-size: 15rem;
+            font-weight: bold;
+            color: rgba(255, 255, 255, 0.9);
+            text-shadow: 3px 3px 0 rgba(0, 0, 0, 0.1);
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .message {
+            font-size: 2rem;
+            color: #fff;
+            margin-bottom: 2rem;
+            text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.1);
+        }
+
+        .home-btn {
+            display: inline-block;
+            padding: 1rem 2rem;
+            background: #2ecc71;
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(46, 204, 113, 0.4);
+            border: 2px solid transparent;
+        }
+
+        .home-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(46, 204, 113, 0.6);
+            background: #27ae60;
+        }
+
+        .home-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 3px 10px rgba(46, 204, 113, 0.4);
+        }
+
+        /* 浮动动画 */
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-20px);
+            }
+        }
+
+        /* 背景装饰气泡 */
+        .bubble {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: rise 10s linear infinite;
+        }
+
+        @keyframes rise {
+            from {
+                transform: translateY(100vh) scale(0.5);
+                opacity: 0.5;
+            }
+            to {
+                transform: translateY(-100vh) scale(1.2);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 背景气泡 -->
+    <div class="bubble" style="left: 10%; width: 40px; height: 40px; animation-delay: 0s"></div>
+    <div class="bubble" style="left: 30%; width: 60px; height: 60px; animation-delay: 2s"></div>
+    <div class="bubble" style="left: 50%; width: 50px; height: 50px; animation-delay: 5s"></div>
+    <div class="bubble" style="left: 70%; width: 30px; height: 30px; animation-delay: 7s"></div>
+    <div class="bubble" style="left: 90%; width: 45px; height: 45px; animation-delay: 3s"></div>
+
+    <div class="container">
+        <div class="error-code">404</div>
+        <p class="message">哎呀！你要找的页面去火星旅行了~</p>
+        <a href="/" class="home-btn">返回地球（主页）</a>
+    </div>
+</body>
+</html>
