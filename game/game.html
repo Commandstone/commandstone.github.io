@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CST协会小游戏</title>
+    <style>
+        :root {
+            --gold: #FFD700;
+            --green: #7CFC00;
+            --transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        body {
+            margin: 0;
+            padding: 2rem;
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--gold) 0%, var(--green) 100%);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            color: #2c3e50;
+            animation: fadeIn 1s ease;
+        }
+
+        .tool-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .tool-card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            transition: var(--transition);
+            cursor: pointer;
+            transform-style: preserve-3d;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tool-card:hover {
+            transform: translateY(-10px) rotateX(5deg) rotateY(-5deg);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .tool-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 200%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.4),
+                transparent
+            );
+            transition: var(--transition);
+        }
+
+        .tool-card:hover::before {
+            left: 100%;
+        }
+
+        .card-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: var(--green);
+            transition: var(--transition);
+        }
+
+        .card-title {
+            color: #2c3e50;
+            margin: 0 0 1rem;
+            font-size: 1.5rem;
+        }
+
+        .card-description {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+
+        .launch-button {
+            background: var(--green);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .launch-button:hover {
+            background: var(--gold);
+            transform: translateX(10px);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+            
+            .tool-card {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎮游戏库</h1>
+        <p>选择您需要的Game</p>
+    </div>
+
+    <div class="tool-grid">
+        <div class="tool-card" onclick="opengame('tcs')">
+            <div class="card-icon">🐍</div>
+            <h3 class="card-title">贪吃蛇</h3>
+            <p class="card-description">无尽模式贪吃蛇</p>
+            <button class="launch-button">立即游玩 →</button>
+        </div>
+      
+      <div class="tool-grid">
+        <div class="tool-card" onclick="opengame('pd')">
+            <div class="card-icon">🧠</div>
+            <h3 class="card-title">记忆配对小游戏</h3>
+            <p class="card-description">考验你的记忆了，60分是满分💯，40-50分的人较为聪明</p>
+            <button class="launch-button">立即游玩 →</button>
+        </div>
+        <div class="tool-grid">
+          <div class="tool-card" onclick="opengame('lrs')">
+               <div class="card-icon">🐺</div>
+             <h3 class="card-title">狼人杀</h3>
+             <p class="card-description">本站n年前的bug.无法游玩</p>
+             <button class="launch-button">立即游玩 →</button>
+        </div>
+            <div class="tool-grid">
+        <div class="tool-card" onclick="opengame('404')">
+            <div class="card-icon">🌍</div>
+            <h3 class="card-title">无</h3>
+            <p class="card-description">点击有惊喜</p>
+            <button class="launch-button">立即游玩 →</button>
+        </div>
+      
+      <div class="tool-grid">
+        <div class="tool-card" onclick="opengame('404')">
+            <div class="card-icon">🌍</div>
+            <h3 class="card-title">无</h3>
+            <p class="card-description">点击有惊喜</p>
+            <button class="launch-button">立即游玩 →</button>
+        </div>
+      <div class="tool-grid">
+          <div class="tool-card" onclick="opengame('404')">
+             <div class="card-icon">🌍</div>
+             <h3 class="card-title">无</h3>
+             <p class="card-description">点击有惊喜玩</p>
+             <button class="launch-button">立即游玩 →</button>
+        </div>
+
+
+    <script>
+        function opengame(gamelName) {
+            // 此处可添加实际跳转逻辑
+            const toolTitles = {
+                tcs: "🐍贪吃蛇[有bug]",
+                pd: "🎮记忆配对小游戏",
+                lrs: "🐺狼人杀[不能游玩,bug*114514]",
+                404: "神秘的页面",
+            };
+            
+            alert(`正在加载 ${toolTitles[gameName]}...感谢Command_star提供的代码.`);
+            window.location.href = `/game/${gameName}.html`;
+        }
+
+        // 添加卡片入场动画
+        document.querySelectorAll('.tool-card').forEach((card, index) => {
+            card.style.animation = `fadeIn 0.5s ease ${index * 0.1}s forwards`;
+            card.style.opacity = 0;
+        });
+    </script>
+</body>
+</html>
