@@ -141,7 +141,7 @@
             <button class="launch-button">立即游玩 →</button>
         </div>
         
-        <div class="tool-card" onclick="openTool('pd')">
+        <div class="tool-card" onclick="openTool('ys')">
             <div class="card-icon">🧠</div>
             <h3 class="card-title">记忆配对小游戏</h3>
             <p class="card-description">考验你的记忆,60分是满分</p>
@@ -182,14 +182,13 @@
             // 此处可添加实际跳转逻辑
             const toolTitles = {
                 tcs: "🐍贪吃蛇[有bug]",
-                pd: "🎮记忆配对小游戏",
+                ys: "🎮记忆配对小游戏",
                 lrs: "🐺狼人杀[不能游玩,bug*114514]",
                 404: "神秘的页面"
             };
             
             alert(`正在加载 ${toolTitles[toolName]}...`);
-            // 实际使用时可替换为：
-            window.location.href = `/tool/${toolName}.html`;
+            window.location.href = `/game/${toolName}.html`;
         }
 
         // 添加卡片入场动画
