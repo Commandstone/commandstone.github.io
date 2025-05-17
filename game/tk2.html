@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Tank Battle Game</title>
+    <title>坦克大战2🚀</title>
     <style>
         body {
             margin: 0;
@@ -49,10 +49,10 @@
     <canvas id="gameCanvas"></canvas>
     <canvas id="miniMap"></canvas>
     <div id="gameInfo">
-        <div>生命: <span id="lives">3</span></div>
+        <div>生命: <span id="lives">6</span></div>
         <div>分数: <span id="score">0</span></div>
     </div>
-    <div id="gameOver">游戏结束，请刷新页面</div>
+    <div id="gameOver">游戏结束，请刷新页面|||菜就多练！</div>
 
     <script>
         // 游戏主画布
@@ -67,7 +67,7 @@
 
         // 游戏状态
         let gameRunning = true;
-        let playerLives = 3;
+        let playerLives = 6;
         let score = 0;
 
         // 玩家坦克
@@ -160,12 +160,14 @@
                 width: 5,
                 height: 5,
                 color: 'yellow',
-                speed: 5,
+                speed: 10,
+                //speed: 5
                 direction: tank.direction,
                 owner: tank
             };
             tank.bullets.push(bullet);
         }
+        
 
         // 我方AI行为
         function allyAI(tank, deltaTime) {
