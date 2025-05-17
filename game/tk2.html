@@ -13,6 +13,7 @@
         #gameCanvas {
             display: block;
             background-color: #000;
+            margin: 0 auto;
         }
         #miniMap {
             position: absolute;
@@ -29,6 +30,18 @@
             left: 10px;
             color: white;
             font-size: 16px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 5px;
+        }
+        #gameOver {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 48px;
+            display: none;
         }
     </style>
 </head>
@@ -36,9 +49,10 @@
     <canvas id="gameCanvas"></canvas>
     <canvas id="miniMap"></canvas>
     <div id="gameInfo">
-        <div id="lives">Lives: 3</div>
-        <div id="score">Score: 0</div>
+        <div>生命: <span id="lives">3</span></div>
+        <div>分数: <span id="score">0</span></div>
     </div>
+    <div id="gameOver">游戏结束，请刷新页面</div>
 
     <script>
         // 游戏主画布
@@ -55,8 +69,6 @@
         let gameRunning = true;
         let playerLives = 3;
         let score = 0;
-        const livesDisplay = document.getElementById('lives');
-        const scoreDisplay = document.getElementById('score');
 
         // 玩家坦克
         const playerTank = {
@@ -66,14 +78,14 @@
             height: 30,
             color: 'blue',
             speed: 3,
-            direction: 0,
+            direction: 0, // 0:上, 1:右, 2:下, 3:左
             bullets: [],
             lastShot: 0,
             shootDelay: 500,
             isPlayer: true
         };
 
-        // 我方AI坦克（修复了显示问题）
+        // 友军AI坦克
         const allyTank = {
             x: 200,
             y: 200,
@@ -88,11 +100,10 @@
             isPlayer: false,
             isAlly: true,
             aiTimer: 0,
-            aiInterval: 2000,
-            alive: true  // 添加了alive状态
+            aiInterval: 2000
         };
 
-        // 敌方AI坦克
+        // 敌军AI坦克
         let enemyTank = {
             x: 600,
             y: 400,
@@ -108,7 +119,6 @@
             isAlly: false,
             aiTimer: 0,
             aiInterval: 3000,
-            alive: true,
             respawnTimer: 0
         };
 
@@ -159,20 +169,15 @@
 
         // 我方AI行为
         function allyAI(tank, deltaTime) {
-            if (!tank.alive) return;
-            
             tank.aiTimer += deltaTime;
             if (tank.aiTimer >= tank.aiInterval) {
                 tank.aiTimer = 0;
                 tank.direction = Math.floor(Math.random() * 4);
-                
-                if (Math.random() < 0.7) {
+                if (Math.random() < 0.3) {
                     shoot(tank);
                 }
             }
-            
             moveTank(tank);
-            avoidObstacles(tank);
         }
 
         // 敌方AI行为
@@ -180,7 +185,10 @@
             if (!tank.alive) {
                 tank.respawnTimer += deltaTime;
                 if (tank.respawnTimer >= 3000) {
-                    respawnEnemy();
+                    tank.alive = true;
+                    tank.x = Math.random() > 0.5 ? 100 : 700;
+                    tank.y = Math.random() > 0.5 ? 100 : 500;
+                    tank.respawnTimer = 0;
                 }
                 return;
             }
@@ -188,7 +196,6 @@
             tank.aiTimer += deltaTime;
             if (tank.aiTimer >= tank.aiInterval) {
                 tank.aiTimer = 0;
-                
                 const dx = playerTank.x - tank.x;
                 const dy = playerTank.y - tank.y;
                 
@@ -202,37 +209,11 @@
                     shoot(tank);
                 }
             }
-            
             moveTank(tank);
-            avoidObstacles(tank);
-        }
-
-        // 重生敌方坦克
-        function respawnEnemy() {
-            enemyTank = {
-                x: Math.random() > 0.5 ? 100 : 700,
-                y: Math.random() > 0.5 ? 100 : 500,
-                width: 30,
-                height: 30,
-                color: 'red',
-                speed: 2,
-                direction: Math.floor(Math.random() * 4),
-                bullets: [],
-                lastShot: 0,
-                shootDelay: 1500,
-                isPlayer: false,
-                isAlly: false,
-                aiTimer: 0,
-                aiInterval: 3000,
-                alive: true,
-                respawnTimer: 0
-            };
         }
 
         // 移动坦克
         function moveTank(tank) {
-            if (!tank.alive) return;
-            
             let newX = tank.x;
             let newY = tank.y;
             
@@ -243,29 +224,12 @@
                 case 3: newX -= tank.speed; break;
             }
             
+            // 边界检测
             if (newX >= 0 && newX + tank.width <= canvas.width) {
                 tank.x = newX;
             }
             if (newY >= 0 && newY + tank.height <= canvas.height) {
                 tank.y = newY;
-            }
-        }
-
-        // 避免障碍物
-        function avoidObstacles(tank) {
-            if (!tank.alive) return;
-            
-            for (const obstacle of obstacles) {
-                if (checkCollision(tank, obstacle)) {
-                    switch(tank.direction) {
-                        case 0: tank.y += tank.speed; break;
-                        case 1: tank.x -= tank.speed; break;
-                        case 2: tank.y -= tank.speed; break;
-                        case 3: tank.x += tank.speed; break;
-                    }
-                    tank.direction = Math.floor(Math.random() * 4);
-                    break;
-                }
             }
         }
 
@@ -289,12 +253,14 @@
                     case 3: bullet.x -= bullet.speed; break;
                 }
                 
+                // 边界检测
                 if (bullet.x < 0 || bullet.x > canvas.width || 
                     bullet.y < 0 || bullet.y > canvas.height) {
                     tank.bullets.splice(i, 1);
                     continue;
                 }
                 
+                // 障碍物碰撞
                 for (const obstacle of obstacles) {
                     if (checkCollision(bullet, obstacle)) {
                         tank.bullets.splice(i, 1);
@@ -302,18 +268,15 @@
                     }
                 }
                 
-                if (bullet.owner !== playerTank && checkCollision(bullet, playerTank)) {
+                // 敌方子弹击中玩家
+                if (bullet.owner === enemyTank && checkCollision(bullet, playerTank)) {
                     tank.bullets.splice(i, 1);
                     playerHit();
                     continue;
                 }
                 
-                if (bullet.owner !== allyTank && bullet.owner !== playerTank && checkCollision(bullet, allyTank)) {
-                    tank.bullets.splice(i, 1);
-                    continue;
-                }
-                
-                if (bullet.owner !== enemyTank && checkCollision(bullet, enemyTank) && enemyTank.alive) {
+                // 玩家子弹击中敌方
+                if (bullet.owner === playerTank && checkCollision(bullet, enemyTank) && enemyTank.alive) {
                     tank.bullets.splice(i, 1);
                     enemyHit();
                     continue;
@@ -324,13 +287,15 @@
         // 玩家被击中
         function playerHit() {
             playerLives--;
-            livesDisplay.textContent = `Lives: ${playerLives}`;
+            document.getElementById('lives').textContent = playerLives;
             
             if (playerLives <= 0) {
                 gameOver();
             } else {
+                // 重置玩家位置
                 playerTank.x = 400;
                 playerTank.y = 300;
+                playerTank.direction = 0;
             }
         }
 
@@ -339,22 +304,17 @@
             enemyTank.alive = false;
             enemyTank.respawnTimer = 0;
             score += 100;
-            scoreDisplay.textContent = `Score: ${score}`;
+            document.getElementById('score').textContent = score;
         }
 
         // 游戏结束
         function gameOver() {
             gameRunning = false;
-            ctx.fillStyle = 'white';
-            ctx.font = '48px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText('GAME OVER', canvas.width/2, canvas.height/2);
+            document.getElementById('gameOver').style.display = 'block';
         }
 
-        // 绘制坦克（修复了显示问题）
+        // 绘制坦克
         function drawTank(tank) {
-            if (!tank.alive) return;
-            
             ctx.fillStyle = tank.color;
             ctx.fillRect(tank.x, tank.y, tank.width, tank.height);
             
@@ -374,7 +334,7 @@
 
         // 绘制子弹
         function drawBullets(tank) {
-            ctx.fillStyle = tank.bullets[0]?.color || 'yellow';
+            ctx.fillStyle = 'yellow';
             for (const bullet of tank.bullets) {
                 ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
             }
@@ -395,6 +355,7 @@
             const scaleX = miniMapCanvas.width / canvas.width;
             const scaleY = miniMapCanvas.height / canvas.height;
             
+            // 绘制障碍物
             miniMapCtx.fillStyle = 'gray';
             for (const obstacle of obstacles) {
                 miniMapCtx.fillRect(
@@ -405,6 +366,7 @@
                 );
             }
             
+            // 绘制玩家坦克
             miniMapCtx.fillStyle = playerTank.color;
             miniMapCtx.fillRect(
                 playerTank.x * scaleX, 
@@ -413,6 +375,7 @@
                 playerTank.height * scaleY
             );
             
+            // 绘制友军坦克
             miniMapCtx.fillStyle = allyTank.color;
             miniMapCtx.fillRect(
                 allyTank.x * scaleX, 
@@ -421,6 +384,7 @@
                 allyTank.height * scaleY
             );
             
+            // 绘制敌军坦克
             if (enemyTank.alive) {
                 miniMapCtx.fillStyle = enemyTank.color;
                 miniMapCtx.fillRect(
@@ -476,8 +440,8 @@
             // 绘制游戏元素
             drawObstacles();
             drawTank(playerTank);
-            drawTank(allyTank);  // 确保调用绘制我方坦克
-            drawTank(enemyTank);
+            drawTank(allyTank);
+            if (enemyTank.alive) drawTank(enemyTank);
             drawBullets(playerTank);
             drawBullets(allyTank);
             drawBullets(enemyTank);
@@ -488,7 +452,7 @@
             requestAnimationFrame(gameLoop);
         }
 
-        // 启动游戏
+        // 初始化游戏
         requestAnimationFrame(gameLoop);
     </script>
 </body>
