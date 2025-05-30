@@ -4,247 +4,189 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>代码雨视频播放器</title>
+    <title>CST视频</title>
     <style>
         body {
             margin: 0;
-            background: #000;
             overflow: hidden;
+            background-color: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             height: 100vh;
-            font-family: 'Courier New', monospace;
         }
-        #matrix {
+        canvas {
             position: fixed;
             top: 0;
             left: 0;
-            z-index: 0;
-            opacity: 0.15;
-        }
-        .player-container {
-            position: relative;
             z-index: 1;
+        }
+        .video-container {
+            position: relative;
+            z-index: 2;
             width: 80%;
             max-width: 800px;
-            margin: 5vh auto;
-            box-shadow: 0 0 20px rgba(0,255,0,0.3);
         }
         video {
             width: 100%;
-            display: block;
-            background: #000;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
         }
         .controls {
-            background: rgba(0,0,0,0.8);
-            padding: 12px;
-            border-top: 1px solid #0f0;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
         }
         .progress-container {
             width: 100%;
-            height: 6px;
+            height: 10px;
             background: #333;
-            margin: 10px 0;
+            margin-bottom: 10px;
             cursor: pointer;
-            position: relative;
         }
-        .progress-bar {
+        .progress {
             height: 100%;
-            background: #0f0;
+            background: #4CAF50;
             width: 0%;
-            transition: width 0.1s;
-        }
-        .time-display {
-            color: #0f0;
-            font-size: 14px;
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
         }
         .buttons {
             display: flex;
-            gap: 10px;
+            justify-content: space-between;
         }
         button {
-            background: transparent;
-            color: #0f0;
-            border: 1px solid #0f0;
-            padding: 6px 12px;
+            background: #333;
+            color: white;
+            border: none;
+            padding: 5px 10px;
             cursor: pointer;
-            transition: all 0.2s;
         }
         button:hover {
-            background: #0f0;
-            color: #000;
+            background: #4CAF50;
         }
     </style>
 </head>
 <body>
     <canvas id="matrix"></canvas>
     
-    <div class="player-container">
-        <video id="video" preload="auto">
-            <source src="xg-video.mp4" type="mp4">
+    <div class="video-container">
+        <video id="videoPlayer">
+            <source src="xg-video.mp4" type="video/mp4">
             您的浏览器不支持HTML5视频
         </video>
         
         <div class="controls">
-            <div class="time-display">
-                <span id="current-time">00:00</span>
-                <span id="duration">00:00</span>
+            <div class="progress-container" id="progressContainer">
+                <div class="progress" id="progress"></div>
             </div>
-            <div class="progress-container" id="progress-container">
-                <div class="progress-bar" id="progress-bar"></div>
-            </div>
+            
             <div class="buttons">
-                <button id="play-btn">播放</button>
-                <button id="fullscreen-btn">全屏</button>
-                <button id="mute-btn">静音</button>
-                <input type="range" id="volume" min="0" max="1" step="0.1" value="1">
+                <button id="playBtn">播放/暂停</button>
+                <button id="fullscreenBtn">全屏</button>
+                <span id="time">00:00 / 00:00</span>
             </div>
         </div>
     </div>
 
     <script>
-        // 代码雨背景
+        // 代码雨效果
         const canvas = document.getElementById('matrix');
         const ctx = canvas.getContext('2d');
         
-        function initMatrix() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+        const katakana = 'アァカサタナハマヤャラワガザダバパイィキシチニヒミリヰギジヂビピウゥクスツヌフムユュルグズブヅプエェケセテネヘメレヱゲゼデベペオォコソトノホモヨョロヲゴゾドボポヴッン';
+        const latin = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        const nums = '0123456789';
+        
+        const alphabet = katakana + latin + nums;
+        
+        const fontSize = 16;
+        const columns = canvas.width / fontSize;
+        
+        const rainDrops = [];
+        
+        for (let x = 0; x < columns; x++) {
+            rainDrops[x] = 1;
+        }
+        
+        const draw = () => {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
             
-            const chars = "01";
-            const fontSize = 14;
-            const columns = canvas.width / fontSize;
-            const drops = Array(Math.floor(columns)).fill(0);
+            ctx.fillStyle = '#0F0';
+            ctx.font = fontSize + 'px monospace';
             
-            function draw() {
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = '#0f0';
-                ctx.font = fontSize + 'px monospace';
+            for (let i = 0; i < rainDrops.length; i++) {
+                const text = alphabet.charAt(Math.floor(Math.random() * alphabet.length));
+                ctx.fillText(text, i * fontSize, rainDrops[i] * fontSize);
                 
-                for (let i = 0; i < drops.length; i++) {
-                    const text = chars[Math.floor(Math.random() * chars.length)];
-                    ctx.fillText(text, i * fontSize, drops[i] * fontSize);
-                    
-                    if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
-                        drops[i] = 0;
-                    }
-                    drops[i]++;
+                if (rainDrops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    rainDrops[i] = 0;
                 }
-                requestAnimationFrame(draw);
+                rainDrops[i]++;
             }
-            
-            window.addEventListener('resize', () => {
-                canvas.width = window.innerWidth;
-                canvas.height = window.innerHeight;
-            });
-            
-            draw();
-        }
+        };
         
-        // 视频控制
-        const video = document.getElementById('video');
-        const playBtn = document.getElementById('play-btn');
-        const fullscreenBtn = document.getElementById('fullscreen-btn');
-        const muteBtn = document.getElementById('mute-btn');
-        const volumeControl = document.getElementById('volume');
-        const progressContainer = document.getElementById('progress-container');
-        const progressBar = document.getElementById('progress-bar');
-        const currentTimeDisplay = document.getElementById('current-time');
-        const durationDisplay = document.getElementById('duration');
+        setInterval(draw, 30);
         
-        function initVideoControls() {
-            // 播放/暂停控制
-            playBtn.addEventListener('click', togglePlay);
-            video.addEventListener('click', togglePlay);
-            
-            // 全屏控制
-            fullscreenBtn.addEventListener('click', toggleFullscreen);
-            
-            // 静音控制
-            muteBtn.addEventListener('click', toggleMute);
-            volumeControl.addEventListener('input', setVolume);
-            
-            // 进度条控制
-            progressContainer.addEventListener('click', scrub);
-            video.addEventListener('timeupdate', updateProgress);
-            video.addEventListener('canplay', updateTimeDisplay);
-            video.addEventListener('durationchange', updateTimeDisplay);
-            
-            // 键盘控制
-            document.addEventListener('keydown', (e) => {
-                switch(e.code) {
-                    case 'Space': togglePlay(); break;
-                    case 'ArrowRight': skip(5); break;
-                    case 'ArrowLeft': skip(-5); break;
-                    case 'KeyF': toggleFullscreen(); break;
-                    case 'KeyM': toggleMute(); break;
-                }
-            });
-        }
+        // 视频播放器控制
+        const video = document.getElementById('videoPlayer');
+        const playBtn = document.getElementById('playBtn');
+        const progress = document.getElementById('progress');
+        const progressContainer = document.getElementById('progressContainer');
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
+        const timeDisplay = document.getElementById('time');
         
-        function togglePlay() {
+        // 播放/暂停
+        playBtn.addEventListener('click', () => {
             if (video.paused) {
                 video.play();
-                playBtn.textContent = '暂停';
             } else {
                 video.pause();
-                playBtn.textContent = '播放';
             }
-        }
+        });
         
-        function toggleFullscreen() {
-            if (!document.fullscreenElement) {
-                video.requestFullscreen().catch(err => {
-                    console.log(`全屏错误: ${err.message}`);
-                });
-            } else {
-                document.exitFullscreen();
-            }
-        }
-        
-        function toggleMute() {
-            video.muted = !video.muted;
-            muteBtn.textContent = video.muted ? '取消静音' : '静音';
-            volumeControl.value = video.muted ? 0 : video.volume;
-        }
-        
-        function setVolume() {
-            video.volume = volumeControl.value;
-            video.muted = video.volume === 0;
-            muteBtn.textContent = video.muted ? '取消静音' : '静音';
-        }
-        
-        function updateProgress() {
+        // 更新进度条
+        video.addEventListener('timeupdate', () => {
             const percent = (video.currentTime / video.duration) * 100;
-            progressBar.style.width = `${percent}%`;
-            updateTimeDisplay();
-        }
+            progress.style.width = `${percent}%`;
+            
+            // 更新时间显示
+            const currentMinutes = Math.floor(video.currentTime / 60);
+            const currentSeconds = Math.floor(video.currentTime % 60);
+            const durationMinutes = Math.floor(video.duration / 60);
+            const durationSeconds = Math.floor(video.duration % 60);
+            
+            timeDisplay.textContent = `${currentMinutes}:${currentSeconds < 10 ? '0' : ''}${currentSeconds} / ${durationMinutes}:${durationSeconds < 10 ? '0' : ''}${durationSeconds}`;
+        });
         
-        function scrub(e) {
-            const scrubTime = (e.offsetX / progressContainer.offsetWidth) * video.duration;
-            video.currentTime = scrubTime;
-        }
+        // 点击进度条跳转
+        progressContainer.addEventListener('click', (e) => {
+            const width = progressContainer.clientWidth;
+            const clickX = e.offsetX;
+            const duration = video.duration;
+            
+            video.currentTime = (clickX / width) * duration;
+        });
         
-        function skip(seconds) {
-            video.currentTime += seconds;
-        }
+        // 全屏
+        fullscreenBtn.addEventListener('click', () => {
+            if (video.requestFullscreen) {
+                video.requestFullscreen();
+            } else if (video.webkitRequestFullscreen) {
+                video.webkitRequestFullscreen();
+            } else if (video.msRequestFullscreen) {
+                video.msRequestFullscreen();
+            }
+        });
         
-        function formatTime(seconds) {
-            const minutes = Math.floor(seconds / 60);
-            const secs = Math.floor(seconds % 60);
-            return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-        }
-        
-        function updateTimeDisplay() {
-            currentTimeDisplay.textContent = formatTime(video.currentTime);
-            durationDisplay.textContent = formatTime(video.duration);
-        }
-        
-        // 初始化
-        initMatrix();
-        initVideoControls();
+        // 视频加载后更新总时长
+        video.addEventListener('loadedmetadata', () => {
+            const durationMinutes = Math.floor(video.duration / 60);
+            const durationSeconds = Math.floor(video.duration % 60);
+            timeDisplay.textContent = `00:00 / ${durationMinutes}:${durationSeconds < 10 ? '0' : ''}${durationSeconds}`;
+        });
     </script>
 </body>
 </html>
