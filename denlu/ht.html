@@ -168,8 +168,8 @@
             ipRecords.unshift(ipInfo);
             
             // 保持最多100条记录
-            if (ipRecords.length > 20) {
-                ipRecords = ipRecords.slice(0, 100);
+            if (ipRecords.length > 8) {
+                ipRecords = ipRecords.slice(0, 8);
             }
             
             // 保存到本地存储
