@@ -126,7 +126,12 @@
                         <td>全部</td>
                     </tr>
                     <tr>
-                        <td>user1</td>
+                        <td>root</td>
+                        <td>********</td>
+                        <td>全部</td>
+                    </tr>
+                    <tr>
+                        <td>test</td>
                         <td>********</td>
                         <td>部分</td>
                     </tr>
@@ -235,9 +240,9 @@
         function showPasswords() {
             if (currentUser && currentUser.username === "admin") {
                 const table = document.querySelector('table');
-                table.rows[1].cells[1].textContent = "admin";
-                table.rows[2].cells[1].textContent = "root";
-                table.rows[3].cells[1].textContent = "test";
+                table.rows[1].cells[1].textContent = "24682468a";
+                table.rows[2].cells[1].textContent = "你没有权限查看";
+                table.rows[3].cells[1].textContent = "123456";
             } else {
                 alert("只有管理员可以查看密码");
             }
