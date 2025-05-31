@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CST博客</title>
+    <style>
+        :root {
+            --gold: #FFD700;
+            --green: #7CFC00;
+            --transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        body {
+            margin: 0;
+            padding: 2rem;
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--gold) 0%, var(--green) 100%);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            color: #2c3e50;
+            animation: fadeIn 1s ease;
+        }
+
+        .tool-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .tool-card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            transition: var(--transition);
+            cursor: pointer;
+            transform-style: preserve-3d;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tool-card:hover {
+            transform: translateY(-10px) rotateX(5deg) rotateY(-5deg);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .tool-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 200%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.4),
+                transparent
+            );
+            transition: var(--transition);
+        }
+
+        .tool-card:hover::before {
+            left: 100%;
+        }
+
+        .card-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: var(--green);
+            transition: var(--transition);
+        }
+
+        .card-title {
+            color: #2c3e50;
+            margin: 0 0 1rem;
+            font-size: 1.5rem;
+        }
+
+        .card-description {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+
+        .launch-button {
+            background: var(--green);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .launch-button:hover {
+            background: var(--gold);
+            transform: translateX(10px);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+            
+            .tool-card {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📒 博客</h1>
+        <p>选择你要看的文章</p>
+    </div>
+
+    <div class="tool-grid">
+        <div class="tool-card" onclick="openTool('index')">
+            <div class="card-icon">📱</div>
+            <h3 class="card-title">近期热点</h3>
+            <p class="card-description">收录最新事件</p>
+            <button class="launch-button">立即阅读 →</button>
+        </div>
+        
+        <div class="tool-card" onclick="openTool('code_page_1')">
+            <div class="card-icon">📖</div>
+            <h3 class="card-title">挑战20天学习五种基础算法</h3>
+            <p class="card-description">#1</p>
+            <button class="launch-button">立即查看 →</button>
+        </div>
+
+        <div class="tool-card" onclick="openTool('code_page_2')">
+            <div class="card-icon">📖</div>
+            <h3 class="card-title">挑战20天学习五种基础算法</h3>
+            <p class="card-description">#2</p>
+            <button class="launch-button">立即查看 →</button>
+        </div>
+
+        <div class="tool-card" onclick="openTool('code_page_3')">
+            <div class="card-icon">📖</div>
+            <h3 class="card-title">挑战20天学习五种基础算法</h3>
+            <p class="card-description">#3</p>
+            <button class="launch-button">立即查看 →</button>
+        </div>
+
+        <div class="tool-card" onclick="openTool('code_page_4')">
+            <div class="card-icon">📖</div>
+            <h3 class="card-title">挑战20天学习五种基础算法</h3>
+            <p class="card-description">#4</p>
+            <button class="launch-button">立即查看 →</button>
+        </div>
+
+        <div class="tool-card" onclick="openTool('code_page_5')">
+            <div class="card-icon">📖</div>
+            <h3 class="card-title">挑战20天学习五种基础算法</h3>
+            <p class="card-description">#5</p>
+            <button class="launch-button">立即查看 →</button>
+        </div>
+    </div>
+
+    <script>
+        function openTool(toolName) {
+            const toolTitles = {
+                index: "📱主页",
+                code_page_1: "挑战20天学习五种基础算法#1",
+                code_page_2: "挑战20天学习五种基础算法#2",
+                code_page_3: "挑战20天学习五种基础算法#3",
+                code_page_4: "挑战20天学习五种基础算法#4",
+                code_page_5: "挑战20天学习五种基础算法#5",
+            };
+            
+            alert(`正在加载 ${toolTitles[toolName]}...`);
+            window.location.href = `/blog/${toolName}.html`;
+        }
+
+        // 添加卡片入场动画
+        document.querySelectorAll('.tool-card').forEach((card, index) => {
+            card.style.animation = `fadeIn 0.5s ease ${index * 0.1}s forwards`;
+            card.style.opacity = 0;
+        });
+    </script>
+</body>
+</html>
