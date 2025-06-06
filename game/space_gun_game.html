@@ -1,0 +1,438 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>星空枪战</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #000;
+        }
+        canvas {
+            display: block;
+        }
+        #godMode {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: #FF00FF;
+            font-family: Arial;
+            font-size: 20px;
+            text-shadow: 0 0 5px #FFFFFF;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <div id="godMode">外挂已激活</div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const godModeDisplay = document.getElementById('godMode');
+        
+        // 设置画布全屏
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+        // 游戏参数
+        const player = {
+            x: canvas.width / 2,
+            y: canvas.height - 80,
+            width: 50,
+            height: 50,
+            speed: 8,
+            color: '#00FF00',
+            invincible: false
+        };
+        
+        let bullets = [];
+        let missiles = [];
+        let enemies = [];
+        let score = 0;
+        let gameOver = false;
+        let rapidFire = false;
+        let rapidFireInterval;
+        
+        // 星星数组
+        const stars = [];
+        const starCount = 200;
+        
+        // 初始化星星
+        for (let i = 0; i < starCount; i++) {
+            stars.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                radius: Math.random() * 1.5,
+                alpha: Math.random(),
+                speed: Math.random() * 0.05
+            });
+        }
+        
+        // 绘制玩家
+        function drawPlayer() {
+            ctx.save();
+            ctx.translate(player.x, player.y);
+            
+            // 机身
+            ctx.fillStyle = player.invincible ? '#FF00FF' : player.color;
+            ctx.beginPath();
+            ctx.moveTo(0, -15);
+            ctx.lineTo(-10, 10);
+            ctx.lineTo(0, 5);
+            ctx.lineTo(10, 10);
+            ctx.closePath();
+            ctx.fill();
+            
+            // 机翼
+            ctx.beginPath();
+            ctx.moveTo(-20, 0);
+            ctx.lineTo(-10, 10);
+            ctx.lineTo(10, 10);
+            ctx.lineTo(20, 0);
+            ctx.closePath();
+            ctx.fill();
+            
+            // 引擎火焰
+            if (player.invincible) {
+                ctx.fillStyle = '#FFFFFF';
+                ctx.beginPath();
+                ctx.moveTo(-5, 15);
+                ctx.lineTo(0, 25);
+                ctx.lineTo(5, 15);
+                ctx.closePath();
+                ctx.fill();
+            }
+            
+            ctx.restore();
+        }
+        
+        // 绘制子弹
+        function drawBullets() {
+            ctx.fillStyle = '#FFFF00';
+            bullets.forEach(bullet => {
+                ctx.beginPath();
+                ctx.arc(bullet.x, bullet.y, 3, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+        
+        // 绘制导弹
+        function drawMissiles() {
+            missiles.forEach(missile => {
+                ctx.save();
+                ctx.translate(missile.x, missile.y);
+                
+                // 导弹主体
+                ctx.fillStyle = '#FF8800';
+                ctx.beginPath();
+                ctx.moveTo(0, -5);
+                ctx.lineTo(-3, 5);
+                ctx.lineTo(3, 5);
+                ctx.closePath();
+                ctx.fill();
+                
+                // 导弹尾焰
+                ctx.fillStyle = '#FF0000';
+                ctx.beginPath();
+                ctx.moveTo(-2, 5);
+                ctx.lineTo(0, 10);
+                ctx.lineTo(2, 5);
+                ctx.closePath();
+                ctx.fill();
+                
+                ctx.restore();
+            });
+        }
+        
+        // 绘制敌人
+        function drawEnemies() {
+            enemies.forEach(enemy => {
+                ctx.save();
+                ctx.translate(enemy.x, enemy.y);
+                
+                // 敌机机身
+                ctx.fillStyle = '#FF0000';
+                ctx.beginPath();
+                ctx.moveTo(0, -enemy.radius);
+                ctx.lineTo(-enemy.radius/2, enemy.radius/2);
+                ctx.lineTo(0, 0);
+                ctx.lineTo(enemy.radius/2, enemy.radius/2);
+                ctx.closePath();
+                ctx.fill();
+                
+                // 敌机机翼
+                ctx.beginPath();
+                ctx.moveTo(-enemy.radius, 0);
+                ctx.lineTo(-enemy.radius/2, enemy.radius/2);
+                ctx.lineTo(enemy.radius/2, enemy.radius/2);
+                ctx.lineTo(enemy.radius, 0);
+                ctx.closePath();
+                ctx.fill();
+                
+                // 敌机驾驶舱
+                ctx.fillStyle = '#88FFFF';
+                ctx.beginPath();
+                ctx.arc(0, -enemy.radius/3, enemy.radius/4, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.restore();
+            });
+        }
+        
+        // 绘制星星
+        function drawStars() {
+            ctx.fillStyle = '#FFFFFF';
+            stars.forEach(star => {
+                ctx.globalAlpha = star.alpha;
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // 更新星星闪烁效果
+                star.alpha += star.speed;
+                if (star.alpha <= 0 || star.alpha >= 1) {
+                    star.speed = -star.speed;
+                }
+            });
+            ctx.globalAlpha = 1;
+        }
+        
+        // 更新子弹位置
+        function updateBullets() {
+            bullets = bullets.filter(bullet => bullet.y > 0);
+            bullets.forEach(bullet => bullet.y -= 10);
+        }
+        
+        // 更新导弹位置
+        function updateMissiles() {
+            missiles = missiles.filter(missile => 
+                missile.y > 0 && missile.y < canvas.height && 
+                missile.x > 0 && missile.x < canvas.width
+            );
+            
+            missiles.forEach(missile => {
+                if (missile.target && missile.target.active) {
+                    // 计算目标方向
+                    const dx = missile.target.x - missile.x;
+                    const dy = missile.target.y - missile.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    // 调整导弹方向
+                    missile.x += (dx / distance) * 8;
+                    missile.y += (dy / distance) * 8;
+                } else {
+                    // 没有目标则直线飞行
+                    missile.y -= 8;
+                }
+            });
+        }
+        
+        // 生成敌人
+        function spawnEnemy() {
+            if (Math.random() < 0.02) {
+                const size = 15 + Math.random() * 15;
+                enemies.push({
+                    x: Math.random() * canvas.width,
+                    y: -size,
+                    radius: size,
+                    speed: 1 + Math.random() * 2,
+                    active: true
+                });
+            }
+        }
+        
+        // 更新敌人位置
+        function updateEnemies() {
+            enemies = enemies.filter(enemy => enemy.y < canvas.height + enemy.radius && enemy.active);
+            enemies.forEach(enemy => enemy.y += enemy.speed);
+        }
+        
+        // 射击函数
+        function shoot() {
+            bullets.push({
+                x: player.x,
+                y: player.y - 15
+            });
+        }
+        
+        // 发射导弹
+        function fireMissile() {
+            if (enemies.length > 0) {
+                // 找到最近的敌人
+                let closestEnemy = null;
+                let minDistance = Infinity;
+                
+                enemies.forEach(enemy => {
+                    const dx = player.x - enemy.x;
+                    const dy = player.y - enemy.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        closestEnemy = enemy;
+                    }
+                });
+                
+                if (closestEnemy) {
+                    missiles.push({
+                        x: player.x,
+                        y: player.y - 15,
+                        target: closestEnemy
+                    });
+                }
+            }
+        }
+        
+        // 碰撞检测
+        function checkCollisions() {
+            // 子弹碰撞
+            bullets.forEach((bullet, bIndex) => {
+                enemies.forEach((enemy, eIndex) => {
+                    const dx = bullet.x - enemy.x;
+                    const dy = bullet.y - enemy.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < enemy.radius + 3) {
+                        bullets.splice(bIndex, 1);
+                        enemy.active = false;
+                        score += 10;
+                    }
+                });
+            });
+            
+            // 导弹碰撞
+            missiles.forEach((missile, mIndex) => {
+                enemies.forEach((enemy, eIndex) => {
+                    const dx = missile.x - enemy.x;
+                    const dy = missile.y - enemy.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < enemy.radius + 5) {
+                        missiles.splice(mIndex, 1);
+                        enemy.active = false;
+                        score += 20;
+                    }
+                });
+            });
+            
+            // 玩家与敌人碰撞
+            if (!player.invincible) {
+                enemies.forEach(enemy => {
+                    const dx = player.x - enemy.x;
+                    const dy = player.y - enemy.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < enemy.radius + 15) {
+                        gameOver = true;
+                    }
+                });
+            }
+        }
+        
+        // 绘制分数
+        function drawScore() {
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = '24px Arial';
+            ctx.fillText('分数: ' + score, 20, 30);
+        }
+        
+        // 游戏结束画面
+        function drawGameOver() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.fillStyle = '#FF0000';
+            ctx.font = '48px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('游戏结束', canvas.width/2, canvas.height/2);
+            
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = '36px Arial';
+            ctx.fillText('最终分数: ' + score, canvas.width/2, canvas.height/2 + 50);
+            
+            ctx.font = '24px Arial';
+            ctx.fillText('按F5重新开始', canvas.width/2, canvas.height/2 + 100);
+        }
+        
+        // 键盘控制
+        const keys = {};
+        window.addEventListener('keydown', e => {
+            keys[e.key] = true;
+            
+            // 按G键切换无敌模式
+            if (e.key.toLowerCase() === 'g') {
+                player.invincible = !player.invincible;
+                godModeDisplay.style.display = player.invincible ? 'block' : 'none';
+                
+                // 切换连发模式
+                if (player.invincible) {
+                    rapidFire = true;
+                    rapidFireInterval = setInterval(shoot, 100);
+                } else {
+                    rapidFire = false;
+                    clearInterval(rapidFireInterval);
+                }
+            }
+            
+            // 射击
+            if (e.key === ' ' && !gameOver && !rapidFire) {
+                shoot();
+            }
+            
+            // 发射导弹
+            if (e.key.toLowerCase() === 'f' && !gameOver) {
+                fireMissile();
+            }
+        });
+        window.addEventListener('keyup', e => keys[e.key] = false);
+        
+        // 游戏主循环
+        function gameLoop() {
+            // 清屏
+            ctx.fillStyle = '#000033';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 绘制星星背景
+            drawStars();
+            
+            if (!gameOver) {
+                // 玩家移动
+                if (keys['ArrowLeft'] && player.x > 20) player.x -= player.speed;
+                if (keys['ArrowRight'] && player.x < canvas.width - 20) player.x += player.speed;
+                
+                // 游戏逻辑
+                spawnEnemy();
+                updateBullets();
+                updateMissiles();
+                updateEnemies();
+                checkCollisions();
+                
+                // 绘制游戏元素
+                drawPlayer();
+                drawBullets();
+                drawMissiles();
+                drawEnemies();
+                drawScore();
+            } else {
+                drawGameOver();
+            }
+            
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // 开始游戏
+        gameLoop();
+        
+        // 窗口大小调整
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            player.x = canvas.width / 2;
+            player.y = canvas.height - 80;
+        });
+    </script>
+</body>
+</html>
