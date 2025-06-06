@@ -1,0 +1,333 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>迷宫</title>
+    <style>
+        body { margin:0; overflow:hidden; background:#000033 }
+        canvas { display:block }
+        #inventory {
+            position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
+            display:flex; gap:10px; background:rgba(0,0,0,0.7); padding:8px
+        }
+        .slot {
+            width:60px; height:60px; background:#555; border:2px solid #333;
+            display:flex; flex-direction:column; align-items:center;
+            position:relative
+        }
+        .active { border-color:gold }
+        .item-count {
+            position:absolute; bottom:2px; right:5px;
+            color:white; font-weight:bold
+        }
+        .item-name {
+            position:absolute; bottom:-18px; font-size:12px;
+            color:white; width:100%; text-align:center
+        }
+        #help {
+            position:fixed; top:10px; right:10px;
+            color:white; background:rgba(0,0,0,0.5);
+            padding:5px; border-radius:3px
+        }
+        #message {
+            position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
+            color:white; background:rgba(0,0,0,0.8);
+            padding:20px; border-radius:10px; display:none
+        }
+        #level {
+            position:fixed; top:10px; left:10px;
+            color:white; font-size:24px;
+            background:rgba(0,0,0,0.5);
+            padding:5px 15px; border-radius:5px
+        }
+    </style>
+</head>
+<body>
+    <div id="help">Q放置 | E破坏 | K获得钥匙 | </div>
+    <div id="message">需要钥匙才能进入出口！</div>
+    <div id="level">关卡: 1</div>
+    <canvas id="game"></canvas>
+    <div id="inventory"></div>
+
+    <script>
+        const canvas = document.getElementById('game');
+        const ctx = canvas.getContext('2d');
+        const inv = document.getElementById('inventory');
+        const msg = document.getElementById('message');
+        const levelDisplay = document.getElementById('level');
+        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+        const game = {
+            player: { x:50, y:50, size:20, speed:3 },
+            walls: [],
+            stars: [],
+            exit: null,
+            items: [
+                {id:1, name:"墙砖", color:"#888", max:64},
+                {id:2, name:"出口", color:"blue", max:64},
+                {id:3, name:"陷阱", color:"red", max:64},
+                {id:4, name:"传送门", color:"purple", max:64},
+                {id:5, name:"钥匙", color:"yellow", max:64}
+            ],
+            inventory: Array(5).fill(null),
+            selectedSlot: 0,
+            keys: {},
+            mouseX: 0,
+            mouseY: 0,
+            ghostMode: false,
+            hasKey: false,
+            level: 1,
+            difficulty: 1
+        };
+
+        function init() {
+            game.walls = [];
+            game.hasKey = false;
+            
+            for(let i=0; i<100; i++) {
+                game.stars.push({
+                    x: Math.random()*canvas.width,
+                    y: Math.random()*canvas.height,
+                    size: Math.random()*2+1,
+                    alpha: Math.random()
+                });
+            }
+            
+            for(let x=0; x<canvas.width; x+=40) {
+                game.walls.push({x, y:0, w:40, h:40});
+                game.walls.push({x, y:canvas.height-40, w:40, h:40});
+            }
+            for(let y=0; y<canvas.height; y+=40) {
+                game.walls.push({x:0, y, w:40, h:40});
+                game.walls.push({x:canvas.width-40, y, w:40, h:40});
+            }
+            
+            const wallCount = 30 + game.level * 5;
+            for(let i=0; i<wallCount; i++) {
+                game.walls.push({
+                    x: Math.floor(Math.random()*(canvas.width/40-2)+1)*40,
+                    y: Math.floor(Math.random()*(canvas.height/40-2)+1)*40,
+                    w:40, h:40
+                });
+            }
+            
+            game.exit = {
+                x: Math.floor(Math.random()*(canvas.width/40-2)+1)*40,
+                y: Math.floor(Math.random()*(canvas.height/40-2)+1)*40,
+                w:40, h:40,
+                color:"blue"
+            };
+            
+            game.player.x = 50;
+            game.player.y = 50;
+            
+            if(game.level === 1) {
+                game.inventory[0] = {item:game.items[0], count:64};
+            }
+            
+            updateInventory();
+            levelDisplay.textContent = `关卡: ${game.level}`;
+        }
+
+        function updateInventory() {
+            inv.innerHTML = '';
+            game.inventory.forEach((slot, i) => {
+                const div = document.createElement('div');
+                div.className = `slot ${i===game.selectedSlot?'active':''}`;
+                if(slot) {
+                    div.innerHTML = `
+                        <div style="width:40px;height:40px;background:${slot.item.color}"></div>
+                        <div class="item-count">${slot.count}</div>
+                        <div class="item-name">${slot.item.name}</div>
+                    `;
+                }
+                div.addEventListener('click', () => {
+                    game.selectedSlot = i;
+                    updateInventory();
+                });
+                inv.appendChild(div);
+            });
+        }
+
+        function gameLoop() {
+            ctx.fillStyle = '#000033';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.fillStyle = 'white';
+            game.stars.forEach(star => {
+                star.alpha += (Math.random()-0.5)*0.1;
+                star.alpha = Math.max(0.2, Math.min(1, star.alpha));
+                ctx.globalAlpha = star.alpha;
+                ctx.fillRect(star.x, star.y, star.size, star.size);
+            });
+            ctx.globalAlpha = 1;
+            
+            ctx.fillStyle = '#555';
+            game.walls.forEach(wall => {
+                ctx.fillRect(wall.x, wall.y, wall.w, wall.h);
+            });
+            
+            if(game.exit) {
+                ctx.fillStyle = game.exit.color;
+                ctx.fillRect(game.exit.x, game.exit.y, game.exit.w, game.exit.h);
+            }
+            
+            highlightBlock();
+            
+            if(game.keys['w']) movePlayer(0, -game.player.speed);
+            if(game.keys['a']) movePlayer(-game.player.speed, 0);
+            if(game.keys['s']) movePlayer(0, game.player.speed);
+            if(game.keys['d']) movePlayer(game.player.speed, 0);
+            
+            ctx.fillStyle = game.ghostMode ? 'rgba(0,255,0,0.5)' : '#0F0';
+            ctx.fillRect(game.player.x, game.player.y, game.player.size, game.player.size);
+            
+            if(game.exit && isColliding(
+                {x:game.player.x, y:game.player.y, w:game.player.size, h:game.player.size},
+                game.exit
+            )) {
+                if(game.hasKey) {
+                    game.level++;
+                    game.difficulty = Math.min(5, Math.floor(game.level/3)+1);
+                    game.player.speed = 3 + game.difficulty * 0.5;
+                    init();
+                } else {
+                    msg.style.display = 'block';
+                    setTimeout(() => msg.style.display = 'none', 1000);
+                }
+            }
+            
+            requestAnimationFrame(gameLoop);
+        }
+
+        function highlightBlock() {
+            const blockSize = 40;
+            const hoverX = Math.floor(game.mouseX/blockSize)*blockSize;
+            const hoverY = Math.floor(game.mouseY/blockSize)*blockSize;
+            
+            const isWall = game.walls.some(w => w.x===hoverX && w.y===hoverY);
+            if(isWall) {
+                ctx.strokeStyle = 'rgba(255,255,0,0.7)';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(hoverX, hoverY, blockSize, blockSize);
+            }
+        }
+
+        function movePlayer(dx, dy) {
+            const newX = game.player.x + dx;
+            const newY = game.player.y + dy;
+            
+            if(newX < 0 || newX > canvas.width-game.player.size || 
+               newY < 0 || newY > canvas.height-game.player.size) return;
+            
+            if(game.ghostMode) {
+                game.player.x = newX;
+                game.player.y = newY;
+                return;
+            }
+            
+            const playerRect = {x:newX, y:newY, w:game.player.size, h:game.player.size};
+            
+            if(!game.walls.some(wall => isColliding(playerRect, wall))) {
+                game.player.x = newX;
+                game.player.y = newY;
+            }
+        }
+
+        function isColliding(rect1, rect2) {
+            return rect1.x < rect2.x + rect2.w &&
+                   rect1.x + rect1.w > rect2.x &&
+                   rect1.y < rect2.y + rect2.h &&
+                   rect1.y + rect1.h > rect2.y;
+        }
+
+        window.addEventListener('keydown', e => {
+            const key = e.key.toLowerCase();
+            game.keys[key] = true;
+            
+            if(key >= '1' && key <= '5') {
+                game.selectedSlot = parseInt(key)-1;
+                updateInventory();
+            }
+            if(key === 'q') placeBlock();
+            if(key === 'e') breakBlock();
+            if(key === 'g') game.ghostMode = !game.ghostMode;
+            if(key === 'k') {
+                addToInventory(5);
+                game.hasKey = true;
+            }
+        });
+        
+        window.addEventListener('keyup', e => {
+            game.keys[e.key.toLowerCase()] = false;
+        });
+        
+        canvas.addEventListener('mousemove', e => {
+            game.mouseX = e.clientX;
+            game.mouseY = e.clientY;
+        });
+
+        function placeBlock() {
+            if(!game.inventory[game.selectedSlot] || game.inventory[game.selectedSlot].count <= 0) return;
+            
+            const blockSize = 40;
+            const placeX = Math.floor(game.mouseX/blockSize)*blockSize;
+            const placeY = Math.floor(game.mouseY/blockSize)*blockSize;
+            
+            if(game.walls.some(w => w.x===placeX && w.y===placeY)) return;
+            
+            game.walls.push({
+                x:placeX, y:placeY,
+                w:blockSize, h:blockSize
+            });
+            
+            game.inventory[game.selectedSlot].count--;
+            if(game.inventory[game.selectedSlot].count <= 0) {
+                game.inventory[game.selectedSlot] = null;
+            }
+            updateInventory();
+        }
+
+        function breakBlock() {
+            const blockSize = 40;
+            const targetX = Math.floor(game.mouseX/blockSize)*blockSize;
+            const targetY = Math.floor(game.mouseY/blockSize)*blockSize;
+            
+            for(let i=0; i<game.walls.length; i++) {
+                if(game.walls[i].x===targetX && game.walls[i].y===targetY) {
+                    game.walls.splice(i,1);
+                    addToInventory(1);
+                    break;
+                }
+            }
+        }
+
+        function addToInventory(itemId) {
+            const item = game.items.find(i => i.id === itemId);
+            if(!item) return;
+            
+            for(let i=0; i<game.inventory.length; i++) {
+                if(game.inventory[i] && game.inventory[i].item.id === itemId && 
+                   game.inventory[i].count < item.max) {
+                    game.inventory[i].count++;
+                    updateInventory();
+                    return;
+                }
+            }
+            
+            for(let i=0; i<game.inventory.length; i++) {
+                if(!game.inventory[i]) {
+                    game.inventory[i] = {item, count:1};
+                    updateInventory();
+                    return;
+                }
+            }
+        }
+
+        init();
+        gameLoop();
+    </script>
+</body>
+</html>
