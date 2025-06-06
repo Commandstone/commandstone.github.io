@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>迷宫</title>
+    <title>迷宫游戏</title>
     <style>
         body { margin:0; overflow:hidden; background:#000033 }
         canvas { display:block }
@@ -43,8 +43,8 @@
     </style>
 </head>
 <body>
-    <div id="help">Q放置 | E破坏 | K获得钥匙 | </div>
-    <div id="message">需要钥匙才能进入出口！</div>
+    <div id="help">Q放置 | E破坏 | K钥匙 | 鼠标射击</div>
+    <div id="message"></div>
     <div id="level">关卡: 1</div>
     <canvas id="game"></canvas>
     <div id="inventory"></div>
@@ -60,9 +60,10 @@
         canvas.height = window.innerHeight;
         
         const game = {
-            player: { x:50, y:50, size:20, speed:3 },
+            player: { x:50, y:50, size:20, speed:3, bullets: [], lastShot: 0, autoFire: false },
             walls: [],
             stars: [],
+            enemies: [],
             exit: null,
             items: [
                 {id:1, name:"墙砖", color:"#888", max:64},
@@ -78,13 +79,18 @@
             mouseY: 0,
             ghostMode: false,
             hasKey: false,
+            hasGun: false,
+            hasAutoGun: false,
             level: 1,
             difficulty: 1
         };
 
         function init() {
             game.walls = [];
+            game.enemies = [];
             game.hasKey = false;
+            game.hasGun = false;
+            game.hasAutoGun = false;
             
             for(let i=0; i<100; i++) {
                 game.stars.push({
@@ -120,8 +126,20 @@
                 color:"blue"
             };
             
+            const enemyCount = 3 + Math.floor(game.level/2);
+            for(let i=0; i<enemyCount; i++) {
+                game.enemies.push({
+                    x: Math.floor(Math.random()*(canvas.width/40-2)+1)*40,
+                    y: Math.floor(Math.random()*(canvas.height/40-2)+1)*40,
+                    size: 20,
+                    speed: 1 + game.difficulty * 0.3,
+                    health: 2 + game.difficulty
+                });
+            }
+            
             game.player.x = 50;
             game.player.y = 50;
+            game.player.bullets = [];
             
             if(game.level === 1) {
                 game.inventory[0] = {item:game.items[0], count:64};
@@ -181,6 +199,13 @@
             if(game.keys['s']) movePlayer(0, game.player.speed);
             if(game.keys['d']) movePlayer(game.player.speed, 0);
             
+            updateEnemies();
+            updateBullets();
+            
+            if(game.player.autoFire && game.hasAutoGun && Date.now() - game.player.lastShot > 100) {
+                shootBullet();
+            }
+            
             ctx.fillStyle = game.ghostMode ? 'rgba(0,255,0,0.5)' : '#0F0';
             ctx.fillRect(game.player.x, game.player.y, game.player.size, game.player.size);
             
@@ -194,12 +219,85 @@
                     game.player.speed = 3 + game.difficulty * 0.5;
                     init();
                 } else {
-                    msg.style.display = 'block';
-                    setTimeout(() => msg.style.display = 'none', 1000);
+                    showMessage("需要钥匙才能进入出口！");
                 }
             }
             
             requestAnimationFrame(gameLoop);
+        }
+
+        function updateEnemies() {
+            game.enemies.forEach((enemy, index) => {
+                const dx = game.player.x - enemy.x;
+                const dy = game.player.y - enemy.y;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                
+                if(dist > 200) {
+                    enemy.x += (dx/dist) * enemy.speed;
+                    enemy.y += (dy/dist) * enemy.speed;
+                }
+                
+                ctx.fillStyle = 'red';
+                ctx.fillRect(enemy.x, enemy.y, enemy.size, enemy.size);
+                
+                if(isColliding(
+                    {x:game.player.x, y:game.player.y, w:game.player.size, h:game.player.size},
+                    {x:enemy.x, y:enemy.y, w:enemy.size, h:enemy.size}
+                )) {
+                    showMessage("被敌人攻击了！");
+                    game.player.x = 50;
+                    game.player.y = 50;
+                }
+            });
+        }
+
+        function updateBullets() {
+            game.player.bullets.forEach((bullet, index) => {
+                bullet.x += bullet.dx * 10;
+                bullet.y += bullet.dy * 10;
+                
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.arc(bullet.x, bullet.y, 3, 0, Math.PI*2);
+                ctx.fill();
+                
+                if(bullet.x < 0 || bullet.x > canvas.width || 
+                   bullet.y < 0 || bullet.y > canvas.height) {
+                    game.player.bullets.splice(index, 1);
+                    return;
+                }
+                
+                game.enemies.forEach((enemy, eIndex) => {
+                    if(isColliding(
+                        {x:bullet.x-3, y:bullet.y-3, w:6, h:6},
+                        {x:enemy.x, y:enemy.y, w:enemy.size, h:enemy.size}
+                    )) {
+                        enemy.health--;
+                        game.player.bullets.splice(index, 1);
+                        
+                        if(enemy.health <= 0) {
+                            game.enemies.splice(eIndex, 1);
+                        }
+                    }
+                });
+            });
+        }
+
+        function shootBullet() {
+            if(!game.hasGun && !game.hasAutoGun) return;
+            
+            const dx = game.mouseX - (game.player.x + game.player.size/2);
+            const dy = game.mouseY - (game.player.y + game.player.size/2);
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            
+            game.player.bullets.push({
+                x: game.player.x + game.player.size/2,
+                y: game.player.y + game.player.size/2,
+                dx: dx/dist,
+                dy: dy/dist
+            });
+            
+            game.player.lastShot = Date.now();
         }
 
         function highlightBlock() {
@@ -243,6 +341,12 @@
                    rect1.y + rect1.h > rect2.y;
         }
 
+        function showMessage(text) {
+            msg.textContent = text;
+            msg.style.display = 'block';
+            setTimeout(() => msg.style.display = 'none', 1000);
+        }
+
         window.addEventListener('keydown', e => {
             const key = e.key.toLowerCase();
             game.keys[key] = true;
@@ -253,10 +357,16 @@
             }
             if(key === 'q') placeBlock();
             if(key === 'e') breakBlock();
-            if(key === 'g') game.ghostMode = !game.ghostMode;
+            if(key === 'g') {
+                game.ghostMode = !game.ghostMode;
+                game.hasAutoGun = game.ghostMode;
+            }
             if(key === 'k') {
                 addToInventory(5);
                 game.hasKey = true;
+            }
+            if(key === 'f') {
+                game.hasGun = true;
             }
         });
         
@@ -267,6 +377,21 @@
         canvas.addEventListener('mousemove', e => {
             game.mouseX = e.clientX;
             game.mouseY = e.clientY;
+        });
+
+        canvas.addEventListener('mousedown', e => {
+            if(game.hasGun || game.hasAutoGun) {
+                shootBullet();
+                if(game.hasAutoGun) {
+                    game.player.autoFire = true;
+                }
+            } else {
+                showMessage("你需要先获得枪才能射击！");
+            }
+        });
+        
+        canvas.addEventListener('mouseup', e => {
+            game.player.autoFire = false;
         });
 
         function placeBlock() {
