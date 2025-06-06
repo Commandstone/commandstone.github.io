@@ -1,0 +1,433 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>我的世界</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #000;
+            font-family: Arial, sans-serif;
+        }
+        canvas {
+            display: block;
+        }
+        #inventory {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 5px;
+            display: flex;
+            gap: 10px;
+        }
+        .inventory-slot {
+            width: 60px;
+            height: 60px;
+            background-color: #8B8B8B;
+            border: 2px solid #5A5A5A;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            position: relative;
+        }
+        .inventory-slot.active {
+            border-color: gold;
+        }
+        .item-count {
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            color: white;
+            font-weight: bold;
+            text-shadow: 1px 1px 1px black;
+        }
+        #status {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            color: white;
+            background-color: rgba(0,0,0,0.5);
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+        #controls {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            color: white;
+            background-color: rgba(0,0,0,0.5);
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div id="status">无敌模式: 关闭</div>
+    <div id="controls">
+        移动: WASD<br>
+        放置: Q<br>
+        破坏: E<br>
+        背包: 1-8<br>
+    </div>
+    <canvas id="gameCanvas"></canvas>
+    <div id="inventory"></div>
+    
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const statusDisplay = document.getElementById('status');
+        const inventory = document.getElementById('inventory');
+        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+        const game = {
+            player: {
+                x: canvas.width / 2,
+                y: canvas.height / 2,
+                size: 30,
+                speed: 5,
+                color: '#00FF00',
+                isInvincible: false
+            },
+            blocks: [],
+            stars: [],
+            items: [
+                { id: 1, name: '泥土', color: '#8B4513', maxStack: 64 },
+                { id: 2, name: '石头', color: '#808080', maxStack: 64 },
+                { id: 3, name: '木头', color: '#8B4513', maxStack: 64 },
+                { id: 4, name: '树叶', color: '#2E8B57', maxStack: 64 },
+                { id: 5, name: '水', color: '#1E90FF', maxStack: 64 },
+                { id: 6, name: '沙子', color: '#F4A460', maxStack: 64 },
+                { id: 7, name: '玻璃', color: '#ADD8E6', maxStack: 64 },
+                { id: 8, name: '钻石', color: '#00FFFF', maxStack: 64 }
+            ],
+            inventory: Array(8).fill(null),
+            selectedSlot: 0,
+            keys: {}
+        };
+        
+        function createStars() {
+            for (let i = 0; i < 200; i++) {
+                game.stars.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    size: Math.random() * 3 + 1,
+                    brightness: Math.random(),
+                    speed: Math.random() * 0.05
+                });
+            }
+        }
+        
+        function generateTerrain() {
+            const blockSize = 40;
+            const rows = Math.floor(canvas.height / blockSize);
+            const cols = Math.floor(canvas.width / blockSize);
+            
+            // 生成地面
+            for (let j = 0; j < cols; j++) {
+                const groundHeight = Math.floor(rows * 0.7);
+                for (let i = groundHeight; i < rows; i++) {
+                    const blockType = i === groundHeight ? 1 : 2;
+                    game.blocks.push({
+                        x: j * blockSize,
+                        y: i * blockSize,
+                        width: blockSize,
+                        height: blockSize,
+                        type: blockType,
+                        color: game.items[blockType - 1].color
+                    });
+                }
+            }
+            
+            // 生成矿物层
+            for (let j = 0; j < cols; j++) {
+                for (let i = Math.floor(rows * 0.7) + 5; i < rows; i++) {
+                    if (Math.random() < 0.1) {
+                        const oreType = Math.random() < 0.05 ? 8 : 2; // 5%钻石，其他石头
+                        game.blocks.push({
+                            x: j * blockSize,
+                            y: i * blockSize,
+                            width: blockSize,
+                            height: blockSize,
+                            type: oreType,
+                            color: game.items[oreType - 1].color
+                        });
+                    }
+                }
+            }
+            
+            // 生成树
+            for (let t = 0; t < 8; t++) {
+                const treeX = Math.floor(Math.random() * (cols - 3)) * blockSize;
+                const treeY = (Math.floor(rows * 0.7) - 4) * blockSize;
+                
+                // 树干
+                for (let i = 0; i < 4; i++) {
+                    game.blocks.push({
+                        x: treeX,
+                        y: treeY + i * blockSize,
+                        width: blockSize,
+                        height: blockSize,
+                        type: 3,
+                        color: game.items[2].color
+                    });
+                }
+                
+                // 树叶
+                for (let i = -2; i <= 2; i++) {
+                    for (let j = -2; j <= 2; j++) {
+                        if (Math.abs(i) + Math.abs(j) <= 3) {
+                            game.blocks.push({
+                                x: treeX + i * blockSize,
+                                y: treeY - blockSize + j * blockSize,
+                                width: blockSize,
+                                height: blockSize,
+                                type: 4,
+                                color: game.items[3].color
+                            });
+                        }
+                    }
+                }
+            }
+        }
+        
+        function initInventory() {
+            inventory.innerHTML = '';
+            game.inventory.forEach((slot, index) => {
+                const slotElement = document.createElement('div');
+                slotElement.className = `inventory-slot ${index === game.selectedSlot ? 'active' : ''}`;
+                
+                if (slot) {
+                    slotElement.innerHTML = `
+                        <div style="width:40px;height:40px;background-color:${slot.item.color}"></div>
+                        <div class="item-count">${slot.count}</div>
+                    `;
+                }
+                
+                slotElement.addEventListener('click', () => {
+                    game.selectedSlot = index;
+                    updateInventoryUI();
+                });
+                inventory.appendChild(slotElement);
+            });
+        }
+        
+        function updateInventoryUI() {
+            document.querySelectorAll('.inventory-slot').forEach((slot, index) => {
+                slot.className = `inventory-slot ${index === game.selectedSlot ? 'active' : ''}`;
+                
+                if (game.inventory[index]) {
+                    slot.innerHTML = `
+                        <div style="width:40px;height:40px;background-color:${game.inventory[index].item.color}"></div>
+                        <div class="item-count">${game.inventory[index].count}</div>
+                    `;
+                } else {
+                    slot.innerHTML = '';
+                }
+            });
+        }
+        
+        function addToInventory(itemType) {
+            const item = game.items[itemType - 1];
+            
+            // 检查背包中是否已有相同物品且未满
+            for (let i = 0; i < game.inventory.length; i++) {
+                if (game.inventory[i] && game.inventory[i].item.id === item.id && game.inventory[i].count < item.maxStack) {
+                    game.inventory[i].count++;
+                    updateInventoryUI();
+                    return;
+                }
+            }
+            
+            // 添加到空位
+            for (let i = 0; i < game.inventory.length; i++) {
+                if (!game.inventory[i]) {
+                    game.inventory[i] = {
+                        item: item,
+                        count: 1
+                    };
+                    updateInventoryUI();
+                    return;
+                }
+            }
+        }
+        
+        function drawPlayer() {
+            ctx.fillStyle = game.player.isInvincible ? '#FFFF00' : game.player.color;
+            ctx.fillRect(
+                game.player.x - game.player.size / 2,
+                game.player.y - game.player.size / 2,
+                game.player.size,
+                game.player.size
+            );
+            
+            if (game.player.isInvincible) {
+                ctx.strokeStyle = '#FFFFFF';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(
+                    game.player.x - game.player.size / 2 - 5,
+                    game.player.y - game.player.size / 2 - 5,
+                    game.player.size + 10,
+                    game.player.size + 10
+                );
+            }
+        }
+        
+        function drawBlocks() {
+            game.blocks.forEach(block => {
+                ctx.fillStyle = block.color;
+                ctx.fillRect(block.x, block.y, block.width, block.height);
+                ctx.strokeStyle = '#000';
+                ctx.strokeRect(block.x, block.y, block.width, block.height);
+            });
+        }
+        
+        function drawStars() {
+            ctx.fillStyle = '#FFF';
+            game.stars.forEach(star => {
+                star.brightness += star.speed;
+                if (star.brightness > 1 || star.brightness < 0) {
+                    star.speed = -star.speed;
+                }
+                ctx.globalAlpha = star.brightness;
+                ctx.fillRect(star.x, star.y, star.size, star.size);
+            });
+            ctx.globalAlpha = 1;
+        }
+        
+        function movePlayer() {
+            if (game.keys['a']) {
+                game.player.x = Math.max(game.player.size / 2, game.player.x - game.player.speed);
+            }
+            if (game.keys['d']) {
+                game.player.x = Math.min(canvas.width - game.player.size / 2, game.player.x + game.player.speed);
+            }
+            if (game.keys['w']) {
+                game.player.y = Math.max(game.player.size / 2, game.player.y - game.player.speed);
+            }
+            if (game.keys['s']) {
+                game.player.y = Math.min(canvas.height - game.player.size / 2, game.player.y + game.player.speed);
+            }
+        }
+        
+        function placeBlock() {
+            if (game.inventory[game.selectedSlot]) {
+                const blockSize = 40;
+                const placeX = Math.floor(game.player.x / blockSize) * blockSize;
+                const placeY = Math.floor(game.player.y / blockSize) * blockSize;
+                
+                // 检查是否已经有方块
+                const existingBlock = game.blocks.find(b => 
+                    b.x === placeX && b.y === placeY
+                );
+                
+                if (!existingBlock) {
+                    // 检查是否在玩家位置附近
+                    const playerCenterX = game.player.x;
+                    const playerCenterY = game.player.y;
+                    const distance = Math.sqrt(
+                        Math.pow(playerCenterX - (placeX + blockSize/2), 2) + 
+                        Math.pow(playerCenterY - (placeY + blockSize/2), 2)
+                    );
+                    
+                    if (distance < 150) {
+                        game.blocks.push({
+                            x: placeX,
+                            y: placeY,
+                            width: blockSize,
+                            height: blockSize,
+                            type: game.inventory[game.selectedSlot].item.id,
+                            color: game.inventory[game.selectedSlot].item.color
+                        });
+                        
+                        // 减少物品数量
+                        game.inventory[game.selectedSlot].count--;
+                        if (game.inventory[game.selectedSlot].count <= 0) {
+                            game.inventory[game.selectedSlot] = null;
+                        }
+                        updateInventoryUI();
+                    }
+                }
+            }
+        }
+        
+        function breakBlock() {
+            const blockSize = 40;
+            const playerCenterX = game.player.x;
+            const playerCenterY = game.player.y;
+            
+            for (let i = 0; i < game.blocks.length; i++) {
+                const block = game.blocks[i];
+                const blockCenterX = block.x + block.width / 2;
+                const blockCenterY = block.y + block.height / 2;
+                const distance = Math.sqrt(
+                    Math.pow(playerCenterX - blockCenterX, 2) + 
+                    Math.pow(playerCenterY - blockCenterY, 2)
+                );
+                
+                if (distance < 100) {
+                    addToInventory(block.type);
+                    game.blocks.splice(i, 1);
+                    break;
+                }
+            }
+        }
+        
+        window.addEventListener('keydown', (e) => {
+            game.keys[e.key.toLowerCase()] = true;
+            
+            if (e.key.toLowerCase() === 'g') {
+                game.player.isInvincible = !game.player.isInvincible;
+                statusDisplay.textContent = `无敌模式: ${game.player.isInvincible ? '开启' : '关闭'}`;
+            }
+            
+            if (e.key === 'q') {
+                placeBlock();
+            }
+            
+            if (e.key === 'e') {
+                breakBlock();
+            }
+            
+            if (e.key >= '1' && e.key <= '8') {
+                game.selectedSlot = parseInt(e.key) - 1;
+                updateInventoryUI();
+            }
+        });
+        
+        window.addEventListener('keyup', (e) => {
+            game.keys[e.key.toLowerCase()] = false;
+        });
+        
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+        
+        function gameLoop() {
+            ctx.fillStyle = '#000033';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            drawStars();
+            drawBlocks();
+            movePlayer();
+            drawPlayer();
+            
+            requestAnimationFrame(gameLoop);
+        }
+        
+        createStars();
+        generateTerrain();
+        initInventory();
+        gameLoop();
+    </script>
+</body>
+</html>
