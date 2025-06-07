@@ -114,10 +114,49 @@
                 <div class="code-title">插入排序+函数</div>
                 <button class="copy-btn" onclick="copyCode()">复制代码</button>
             </div>
-            <pre id="code-content">// 这里放置您的代码
-function example() {
-    console.log("这是示例代码");
-    return "Hello World!";
+            <pre id="code-content">#include <iostream>
+using namespace std;
+
+const int maxx = 1001;
+int a[maxx];
+
+void sort(int a[], int n)
+{
+    //排序
+    for(int i = 2; i <= n; i++)
+    {
+        int key = a[i];
+        int j = i -1;
+        while(j >= 1 && a[j] > key)
+        {
+            //交换位置
+            a[j+1] = a[j];
+            j--;
+        }
+        a[j+1]=key;
+    } 
+}
+
+int main()
+{
+    int n;
+    cout<< "输入数个数:";
+    cin >> n;
+    for(int i = 1; i <= n; ++i)
+    {
+        //输入部分
+        cout<< "输入:";
+        cin >> a[i];
+    }
+    sort(a,n);//调用函数
+    for(int i = 1; i <= n; ++i)
+    {
+        //输出部分
+        cout << a[i];
+        cout << " ";
+    }
+
+}
 }</pre>
         </div>
     </div>
