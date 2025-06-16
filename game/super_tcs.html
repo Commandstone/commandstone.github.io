@@ -3,7 +3,7 @@
     
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title _msttexthash="16819946" _msthash="0">贪吃蛇游戏</title>
-    <script src="./贪吃蛇游戏_files/saved_resource"></script>
+    <script src="./super_tcs_files/saved_resource"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -2466,7 +2466,7 @@
                             ` : `
                                 <p class="text-gray-400 text-center mb-4">${itemDescription}</p>
                             `}
-                            <p class="text-xl font-semibold mb-4">價格: ${priceDisplay}</p>
+                            <p class="text-xl font-semibold mb-4">价格: ${priceDisplay}</p>
                             <button id="shop-item-${item.id}" class="py-3 px-6 rounded-full font-bold shadow-md transition duration-300 ${buttonClass}" ${isDisabled ? 'disabled' : ''}>
                                 ${buttonText}
                             </button>
