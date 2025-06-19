@@ -130,7 +130,7 @@
 <body>
     <div class="header">
         <h1>🎮 游戏库</h1>
-        <p>选择您需要的专业工具</p>
+        <p>选择您需要的game</p>
     </div>
 
     <div class="tool-grid">
@@ -175,18 +175,42 @@
             <p class="card-description">2D枪战</p>
             <button class="launch-button">立即游玩 →</button>
         </div>
+        
+        <div class="tool-card" onclick="openTool('super_tcs')">
+            <div class="card-icon">🐍</div>
+            <h3 class="card-title">贪吃蛇2.0</h3>
+            <p class="card-description">正在内测，有一些地方没汉化</p>
+            <button class="launch-button">立即游玩 →</button>
+        </div>
     </div>
+
+    <div class="tool-card" onclick="openTool('mg')">
+            <div class="card-icon">🧱</div>
+            <h3 class="card-title">迷宫</h3>
+            <p class="card-description">正在内测，输入k获得钥匙🔑，输入f获得枪🔫</p>
+            <button class="launch-button">立即游玩 →</button>
+        </div>
+
+    <div class="tool-card" onclick="openTool('mc')">
+            <div class="card-icon">🪓</div>
+            <h3 class="card-title">我的世界</h3>
+            <p class="card-description">em...不能玩</p>
+            <button class="launch-button">立即游玩 →</button>
+        </div>
 
     <script>
         function openTool(toolName) {
             // 此处可添加实际跳转逻辑
             const toolTitles = {
-                tcs: "🐍贪吃蛇[有bug]",
+                mg: "🧱迷宫",
                 ys: "🎮记忆配对小游戏",
-                space_gun_game: "🛸枪战2.0",
+                mc: "🪓我的世界",
                 tk2: "🚀坦克大战2",
                 tk: "🚄坦克大战",
                 gun_game: "🔪枪战",
+                space_gun_game: "🛸枪战2.0",
+                tcs: "🐍贪吃蛇",
+                super_tcs: "🐍贪吃蛇2.0",
                 404: "神秘的页面"
             };
             
