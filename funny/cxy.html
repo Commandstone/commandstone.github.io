@@ -1,0 +1,157 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>程序员求签</title>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background-color: #2ecc71;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            color: #fff;
+            text-align: center;
+        }
+        .container {
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+            width: 80%;
+            max-width: 600px;
+        }
+        h1 {
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        button {
+            padding: 15px 30px;
+            font-size: 1.2em;
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            margin: 20px 0;
+            transition: all 0.3s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        button:hover {
+            background-color: #c0392b;
+            transform: translateY(-3px);
+        }
+        #result {
+            margin: 20px 0;
+        }
+        #luck-level {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 10px;
+            animation: jump 0.5s infinite alternate;
+        }
+        #fortune {
+            font-size: 1.2em;
+            min-height: 100px;
+            padding: 20px;
+            background-color: rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+        }
+        @keyframes jump {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-10px); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>程序员求签</h1>
+        <p>点击下方按钮，获取你的编程运势！</p>
+        <button onclick="drawFortune()">求签</button>
+        <div id="result">
+            <div id="luck-level"></div>
+            <div id="fortune">等待求签中...</div>
+        </div>
+    </div>
+
+    <script>
+        const luckLevels = ["大吉", "小吉", "欧皇", "小凶", "大凶"];
+        const fortunes = [
+            "今日宜重构代码，忌复制粘贴",
+            "你的代码将如丝绸般顺滑，无bug通过测试",
+            "警惕空指针异常，今日容易犯低级错误",
+            "适合学习新框架，吸收知识特别快",
+            "代码审查将获得同事高度评价",
+            "今日不宜提交代码，容易引发冲突",
+            "算法能力提升日，适合刷LeetCode",
+            "注意代码注释，今日容易忽略文档",
+            "IDE更新将带来意外惊喜",
+            "适合结对编程，交流产生火花",
+            "今日容易遇到性能瓶颈，注意优化",
+            "Git操作需谨慎，容易误删分支",
+            "适合参加技术分享会，收获颇丰",
+            "代码灵感爆发日，创意解决方案涌现",
+            "注意API调用限制，容易触发限流",
+            "适合编写单元测试，覆盖率大幅提升",
+            "今日容易遇到环境配置问题",
+            "数据库查询需优化，警惕慢查询",
+            "适合研究设计模式，理解更深入",
+            "代码可读性极高，同事纷纷点赞",
+            "今日容易遇到跨域问题，注意配置",
+            "适合学习函数式编程，思维转变",
+            "代码复用率提高，效率倍增",
+            "警惕内存泄漏，注意资源释放",
+            "适合参加黑客马拉松，表现突出",
+            "今日容易遇到并发问题，注意锁机制",
+            "适合研究源码，理解底层原理",
+            "代码健壮性提升，异常处理完善",
+            "注意第三方库版本兼容性问题",
+            "适合编写技术博客，分享经验",
+            "今日容易遇到缓存一致性问题",
+            "适合学习云原生技术，开阔视野",
+            "代码部署顺利，一次通过",
+            "注意日志级别设置，容易遗漏关键信息",
+            "适合参加代码评审，提出建设性意见",
+            "今日容易遇到正则表达式问题",
+            "适合研究算法优化，性能提升",
+            "代码模块化程度提高，耦合度降低",
+            "注意安全漏洞，及时更新依赖",
+            "才就多练",
+            "今日容易遇到浮点数精度问题",
+            "适合编写自动化脚本，提高效率",
+            "代码扩展性增强，易于维护",
+            "注意线程安全问题，避免竞态条件",
+            "适合研究大数据处理，收获新知",
+            "今日容易遇到编码格式问题",
+            "适合学习机器学习基础，兴趣浓厚",
+            "代码质量评分提高，技术债务减少",
+            "注意网络请求超时设置，合理配置",
+            "适合参加开源项目，贡献代码"
+        ];
+
+        function drawFortune() {
+            const luckElement = document.getElementById('luck-level');
+            const fortuneElement = document.getElementById('fortune');
+            
+            // 随机选择运势等级
+            const randomLuckIndex = Math.floor(Math.random() * luckLevels.length);
+            const randomFortuneIndex = Math.floor(Math.random() * fortunes.length);
+            
+            // 设置动画效果
+            luckElement.style.animation = 'jump 0.5s infinite alternate';
+            fortuneElement.textContent = "运势计算中...";
+            
+            // 模拟求签过程
+            setTimeout(() => {
+                luckElement.textContent = luckLevels[randomLuckIndex];
+                fortuneElement.textContent = fortunes[randomFortuneIndex];
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
