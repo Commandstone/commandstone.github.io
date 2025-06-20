@@ -1,0 +1,173 @@
+
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mac蓝屏模拟器</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #0077cc;
+            color: white;
+            padding: 20px;
+            margin: 0;
+        }
+        .control-panel {
+            max-width: 800px;
+            margin: 20px auto;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+        h1 {
+            text-align: center;
+            color: #fff;
+            text-shadow: 0 0 5px #000;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            background-color: rgba(255,255,255,0.9);
+        }
+        button {
+            background-color: #0071e3;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 18px;
+            display: block;
+            margin: 20px auto;
+            transition: all 0.3s;
+        }
+        button:hover {
+            background-color: #0062c4;
+            transform: scale(1.05);
+        }
+        #macErrorScreen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            color: white;
+            padding: 40px;
+            z-index: 9999;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            overflow: auto;
+            white-space: pre-wrap;
+            text-align: center;
+        }
+        .error-face {
+            font-size: 72px;
+            margin-bottom: 30px;
+            line-height: 1;
+        }
+        .error-message {
+            font-size: 28px;
+            margin-bottom: 30px;
+            line-height: 1.4;
+        }
+        .error-code {
+            font-size: 22px;
+            margin-bottom: 20px;
+            color: #999;
+        }
+        .error-type {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <div class="control-panel">
+        <h1>Mac蓝屏模拟器</h1>
+        
+        <div class="form-group">
+            <label for="errorType">错误类型:</label>
+            <select id="errorType">
+                <option value="KERNEL_PANIC">KERNEL_PANIC</option>
+                <option value="SYSTEM_CRASH">SYSTEM_CRASH</option>
+                <option value="GPU_RESTART">GPU_RESTART</option>
+                <option value="MEMORY_ERROR">MEMORY_ERROR</option>
+                <option value="DISK_ERROR">DISK_ERROR</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="errorCode">错误代码:</label>
+            <input type="text" id="errorCode" value="panic(cpu 0 caller 0xffffff80002c3a5a)">
+        </div>
+        
+        <div class="form-group">
+            <label for="customMessage">自定义消息:</label>
+            <textarea id="customMessage" rows="4">您的Mac遇到问题需要重新启动。请按住电源按钮直到电脑关闭，然后再按电源按钮重新启动。</textarea>
+        </div>
+        
+        <div class="form-group">
+            <label for="faceText">表情符号:</label>
+            <input type="text" id="faceText" value=":(">
+        </div>
+        
+        <button id="generateBtn">生成错误屏幕</button>
+    </div>
+
+    <div id="macErrorScreen"></div>
+
+    <script>
+        document.getElementById('generateBtn').addEventListener('click', function() {
+            const errorType = document.getElementById('errorType').value;
+            const errorCode = document.getElementById('errorCode').value;
+            const customMessage = document.getElementById('customMessage').value;
+            const faceText = document.getElementById('faceText').value;
+            
+            const macErrorScreen = document.getElementById('macErrorScreen');
+            macErrorScreen.innerHTML = `
+                <div class="error-face">${faceText}</div>
+                <div class="error-message">${customMessage}</div>
+                <div class="error-code">${errorCode}</div>
+                <div class="error-type">错误类型: ${errorType}</div>
+            `;
+            
+            macErrorScreen.style.display = 'block';
+            
+            // 强制全屏
+            if (macErrorScreen.requestFullscreen) {
+                macErrorScreen.requestFullscreen();
+            } else if (macErrorScreen.webkitRequestFullscreen) {
+                macErrorScreen.webkitRequestFullscreen();
+            } else if (macErrorScreen.msRequestFullscreen) {
+                macErrorScreen.msRequestFullscreen();
+            }
+            
+            // 10秒后退出全屏
+            setTimeout(function() {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+                macErrorScreen.style.display = 'none';
+            }, 10000);
+        });
+    </script>
+</body>
+</html>
