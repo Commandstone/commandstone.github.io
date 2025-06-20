@@ -1,0 +1,111 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>在线屏幕录制工具</title>
+    <style>
+        body {
+            background-color: #4CAF50;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+            color: white;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 30px;
+            border-radius: 10px;
+        }
+        button {
+            background-color: #2E7D32;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+            margin: 10px;
+        }
+        button:hover {
+            background-color: #1B5E20;
+        }
+        select {
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 5px;
+            margin: 10px;
+        }
+        #preview {
+            width: 100%;
+            max-width: 500px;
+            margin: 20px auto;
+            background-color: black;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>在线屏幕录制工具</h1>
+        <div>
+            <label for="format">选择录制格式：</label>
+            <select id="format">
+                <option value="video/mp4">MP4</option>
+                <option value="video/webm">WebM</option>
+                <option value="video/ogg">Ogg</option>
+            </select>
+        </div>
+        <button id="startBtn">开始录制</button>
+        <button id="stopBtn" disabled>停止录制</button>
+        <video id="preview" controls></video>
+    </div>
+
+    <script>
+        let mediaRecorder;
+        let recordedChunks = [];
+        
+        document.getElementById('startBtn').addEventListener('click', async () => {
+            try {
+                const format = document.getElementById('format').value;
+                const stream = await navigator.mediaDevices.getDisplayMedia({
+                    video: true,
+                    audio: true
+                });
+                
+                mediaRecorder = new MediaRecorder(stream, { mimeType: format });
+                mediaRecorder.ondataavailable = (e) => {
+                    if (e.data.size > 0) {
+                        recordedChunks.push(e.data);
+                    }
+                };
+                
+                mediaRecorder.onstop = () => {
+                    const blob = new Blob(recordedChunks, { type: format });
+                    const videoUrl = URL.createObjectURL(blob);
+                    const preview = document.getElementById('preview');
+                    preview.src = videoUrl;
+                    preview.style.display = 'block';
+                    recordedChunks = [];
+                };
+                
+                mediaRecorder.start();
+                document.getElementById('startBtn').disabled = true;
+                document.getElementById('stopBtn').disabled = false;
+            } catch (err) {
+                console.error('Error:', err);
+                alert('录制失败: ' + err.message);
+            }
+        });
+        
+        document.getElementById('stopBtn').addEventListener('click', () => {
+            mediaRecorder.stop();
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+        });
+    </script>
+</body>
+</html>
