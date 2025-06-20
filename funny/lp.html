@@ -1,0 +1,248 @@
+
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Windows蓝屏模拟器</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #008000;
+            color: white;
+            padding: 20px;
+            margin: 0;
+        }
+        .control-panel {
+            max-width: 800px;
+            margin: 20px auto;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+        h1 {
+            text-align: center;
+            color: #fff;
+            text-shadow: 0 0 5px #000;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            background-color: rgba(255,255,255,0.9);
+        }
+        button {
+            background-color: #0066cc;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 18px;
+            display: block;
+            margin: 20px auto;
+            transition: all 0.3s;
+        }
+        button:hover {
+            background-color: #0055aa;
+            transform: scale(1.05);
+        }
+        #blueScreen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #0078d7;
+            color: white;
+            padding: 40px;
+            z-index: 9999;
+            font-family: 'Lucida Console', monospace;
+            overflow: auto;
+            white-space: pre-wrap;
+        }
+        .error-face {
+            font-size: 72px;
+            margin-bottom: 30px;
+            line-height: 1;
+        }
+        .error-message {
+            font-size: 28px;
+            margin-bottom: 30px;
+            line-height: 1.4;
+        }
+        .error-code {
+            font-size: 22px;
+            margin-bottom: 20px;
+        }
+        .error-type {
+            font-size: 20px;
+            margin-bottom: 20px;
+        }
+        .progress-info {
+            font-size: 18px;
+            margin-top: 40px;
+        }
+        .qr-code {
+            margin-top: 30px;
+            font-size: 16px;
+        }
+        #qrCanvas {
+            background: white;
+            padding: 5px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="control-panel">
+        <h1>Windows蓝屏模拟器</h1>
+        
+        <div class="form-group">
+            <label for="errorType">错误类型:</label>
+            <select id="errorType">
+                <option value="CRITICAL_PROCESS_DIED">CRITICAL_PROCESS_DIED</option>
+                <option value="SYSTEM_THREAD_EXCEPTION_NOT_HANDLED">SYSTEM_THREAD_EXCEPTION_NOT_HANDLED</option>
+                <option value="IRQL_NOT_LESS_OR_EQUAL">IRQL_NOT_LESS_OR_EQUAL</option>
+                <option value="PAGE_FAULT_IN_NONPAGED_AREA">PAGE_FAULT_IN_NONPAGED_AREA</option>
+                <option value="KERNEL_SECURITY_CHECK_FAILURE">KERNEL_SECURITY_CHECK_FAILURE</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="errorCode">错误代码:</label>
+            <input type="text" id="errorCode" value="0x008090EF">
+        </div>
+        
+        <div class="form-group">
+            <label for="customMessage">自定义消息:</label>
+            <textarea id="customMessage" rows="4">出现了一个错误，系统已关闭电脑以防止损坏你的计算机。</textarea>
+        </div>
+        
+        <div class="form-group">
+            <label for="faceText">表情符号:</label>
+            <input type="text" id="faceText" value=":(">
+        </div>
+        
+        <button id="generateBtn">生成蓝屏</button>
+    </div>
+
+    <div id="blueScreen"></div>
+
+    <script>
+        function generateQRCode() {
+            const canvas = document.createElement('canvas');
+            canvas.id = 'qrCanvas';
+            canvas.width = 100;
+            canvas.height = 100;
+            
+            const ctx = canvas.getContext('2d');
+            const size = 5;
+            const margin = 10;
+            
+            // 生成随机二维码图案
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.fillStyle = 'black';
+            // 定位标记
+            ctx.fillRect(margin, margin, 7*size, 7*size);
+            ctx.fillRect(margin, canvas.height-margin-7*size, 7*size, 7*size);
+            ctx.fillRect(canvas.width-margin-7*size, margin, 7*size, 7*size);
+            
+            // 随机数据区域
+            for(let y = margin; y < canvas.height-margin; y += size) {
+                for(let x = margin; x < canvas.width-margin; x += size) {
+                    // 跳过定位标记区域
+                    if((x < margin+7*size && y < margin+7*size) || 
+                       (x < margin+7*size && y > canvas.height-margin-7*size) || 
+                       (x > canvas.width-margin-7*size && y < margin+7*size)) {
+                        continue;
+                    }
+                    
+                    if(Math.random() > 0.5) {
+                        ctx.fillRect(x, y, size-1, size-1);
+                    }
+                }
+            }
+            
+            return canvas;
+        }
+
+        document.getElementById('generateBtn').addEventListener('click', function() {
+            const errorType = document.getElementById('errorType').value;
+            const errorCode = document.getElementById('errorCode').value;
+            const customMessage = document.getElementById('customMessage').value;
+            const faceText = document.getElementById('faceText').value;
+            
+            const blueScreen = document.getElementById('blueScreen');
+            blueScreen.innerHTML = `
+                <div class="error-face">${faceText}</div>
+                <div class="error-message">你的电脑遇到问题，需要重新启动<br>${customMessage}</div>
+                <div class="error-code">错误代码: ${errorCode}</div>
+                <div class="error-type">如需了解更多信息，则可以稍后在线搜索此错误: ${errorType}</div>
+                <div class="progress-info">
+                    收集错误信息... <span id="progressPercent">0</span>%
+                </div>
+                <div class="qr-code">
+                    扫描二维码获取更多信息:
+                    <div id="qrContainer"></div>
+                </div>
+            `;
+            
+            // 生成二维码
+            const qrContainer = blueScreen.querySelector('#qrContainer');
+            qrContainer.appendChild(generateQRCode());
+            
+            blueScreen.style.display = 'block';
+            
+            // 强制全屏
+            if (blueScreen.requestFullscreen) {
+                blueScreen.requestFullscreen();
+            } else if (blueScreen.webkitRequestFullscreen) {
+                blueScreen.webkitRequestFullscreen();
+            } else if (blueScreen.msRequestFullscreen) {
+                blueScreen.msRequestFullscreen();
+            }
+            
+            // 动态进度条
+            let progress = 0;
+            const progressElement = blueScreen.querySelector('#progressPercent');
+            const progressInterval = setInterval(() => {
+                progress += Math.floor(Math.random() * 5) + 1;
+                if(progress > 100) progress = 100;
+                progressElement.textContent = progress;
+                
+                if(progress === 100) {
+                    clearInterval(progressInterval);
+                    progressElement.parentNode.innerHTML += '<br>完成';
+                }
+            }, 100);
+            
+            // 10秒后退出全屏
+            setTimeout(function() {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+                blueScreen.style.display = 'none';
+                clearInterval(progressInterval);
+            }, 10000);
+        });
+    </script>
+</body>
+</html>
