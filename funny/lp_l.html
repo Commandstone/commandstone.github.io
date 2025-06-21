@@ -1,0 +1,260 @@
+
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Linux内核模拟器</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background-color: #0077cc;
+            color: white;
+            padding: 20px;
+            margin: 0;
+        }
+        .control-panel {
+            max-width: 900px;
+            margin: 20px auto;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 25px;
+            border-radius: 5px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+        }
+        h1 {
+            text-align: center;
+            color: #fff;
+            text-shadow: 0 0 5px #000;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border-radius: 3px;
+            border: 1px solid #ccc;
+            background-color: rgba(255,255,255,0.9);
+            font-family: monospace;
+            font-size: 14px;
+        }
+        textarea {
+            min-height: 100px;
+        }
+        button {
+            background-color: #3a3a3a;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 18px;
+            display: block;
+            margin: 30px auto;
+            transition: all 0.3s;
+            width: 200px;
+            text-align: center;
+        }
+        button:hover {
+            background-color: #2a2a2a;
+            transform: scale(1.05);
+        }
+        #linuxPanicScreen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            color: #ff0000;
+            padding: 30px;
+            z-index: 9999;
+            font-family: monospace;
+            overflow: auto;
+            white-space: pre-wrap;
+            line-height: 1.4;
+        }
+        .panic-header {
+            font-size: 28px;
+            margin-bottom: 25px;
+            color: #ff0000;
+            font-weight: bold;
+        }
+        .panic-message {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: #ffffff;
+        }
+        .panic-details {
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: #aaaaaa;
+        }
+        .kernel-info {
+            font-size: 14px;
+            color: #555555;
+            margin-top: 30px;
+        }
+        .register-dump {
+            font-size: 14px;
+            color: #888888;
+            margin: 15px 0;
+        }
+        .stack-trace {
+            font-size: 14px;
+            color: #999999;
+            margin: 15px 0;
+        }
+        .hardware-info {
+            font-size: 13px;
+            color: #666666;
+            margin: 10px 0;
+        }
+        .progress-bar {
+            width: 100%;
+            background-color: #222;
+            height: 20px;
+            margin: 20px 0;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .progress {
+            height: 100%;
+            background-color: #ff0000;
+            width: 0%;
+            transition: width 0.5s;
+        }
+        .timestamp {
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="control-panel">
+        <h1>Linux内核模拟器</h1>
+        
+        <div class="form-group">
+            <label for="panicType">错误类型:</label>
+            <select id="panicType">
+                <option value="Kernel panic">Kernel panic</option>
+                <option value="Kernel oops">Kernel oops</option>
+                <option value="General protection fault">General protection fault</option>
+                <option value="Page fault">Page fault</option>
+                <option value="NULL pointer dereference">NULL pointer dereference</option>
+                <option value="Double fault">Double fault</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="panicMessage">错误消息:</label>
+            <textarea id="panicMessage">Kernel panic - not syncing: Fatal exception in interrupt
+Attempted to kill init! exitcode=0x00007f00</textarea>
+        </div>
+        
+        <div class="form-group">
+            <label for="callTrace">调用追踪:</label>
+            <textarea id="callTrace">[    0.000000] Call Trace:
+[    0.000000]  [<ffffffff8100b0d8>] ? panic+0x58/0x110
+[    0.000000]  [<ffffffff811d5b9d>] ? mount_block_root+0x1fd/0x2a0
+[    0.000000]  [<ffffffff811d5e96>] ? mount_root+0x56/0x5a
+[    0.000000]  [<ffffffff811d7f83>] ? prepare_namespace+0x173/0x1a0
+[    0.000000]  [<ffffffff811d79b1>] ? kernel_init+0x1a1/0x1b0
+[    0.000000]  [<ffffffff8100c0ca>] ? ret_from_fork+0x2a/0x40</textarea>
+        </div>
+        
+        <div class="form-group">
+            <label for="registerDump">寄存器转储:</label>
+            <textarea id="registerDump">[    0.000000] RIP: 0010:[<ffffffff8100b0d8>]  [<ffffffff8100b0d8>] panic+0x58/0x110
+[    0.000000] RSP: 0018:ffff88003d8c3e08  EFLAGS: 00010286
+[    0.000000] RAX: 000000000000001f RBX: ffffffff81e8c840 RCX: 0000000000000006
+[    0.000000] RDX: 0000000000000000 RSI: 0000000000000086 RDI: ffffffff81e8c840
+[    0.000000] RBP: ffff88003d8c3e18 R08: 0000000000000000 R09: 0000000000000000
+[    0.000000] R10: 0000000000000000 R11: 0000000000000000 R12: ffffffff81e8c840
+[    0.000000] R13: 0000000000000000 R14: 0000000000000000 R15: 0000000000000000</textarea>
+        </div>
+        
+        <div class="form-group">
+            <label for="hardwareInfo">硬件信息:</label>
+            <textarea id="hardwareInfo">[    0.000000] CPU: 0 PID: 1 Comm: swapper/0 Not tainted 5.4.0-42-generic #46-Ubuntu
+[    0.000000] Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS 1.13.0-1ubuntu1 04/01/2014
+[    0.000000] Kernel loaded at 0xffffffff81000000
+[    0.000000] Memory: 1984M/2048M available (12339K kernel code, 2472K rwdata, 4008K rodata, 2408K init, 2368K bss, 64M reserved)</textarea>
+        </div>
+        
+        <button id="generateBtn">生成内核恐慌</button>
+    </div>
+
+    <div id="linuxPanicScreen"></div>
+
+    <script>
+        document.getElementById('generateBtn').addEventListener('click', function() {
+            const panicType = document.getElementById('panicType').value;
+            const panicMessage = document.getElementById('panicMessage').value;
+            const callTrace = document.getElementById('callTrace').value;
+            const registerDump = document.getElementById('registerDump').value;
+            const hardwareInfo = document.getElementById('hardwareInfo').value;
+            
+            const linuxPanicScreen = document.getElementById('linuxPanicScreen');
+            linuxPanicScreen.innerHTML = `
+                <div class="panic-header">${panicType}</div>
+                <div class="panic-message">${panicMessage}</div>
+                <div class="progress-bar"><div class="progress" id="panicProgress"></div></div>
+                <div class="panic-details">${callTrace}</div>
+                <div class="register-dump">${registerDump}</div>
+                <div class="hardware-info">${hardwareInfo}</div>
+                <div class="stack-trace">
+[    0.000000] Stack:
+[    0.000000]  ffff88003d8c3e08 ffffffff8100b0d8 ffff88003d8c3e18 ffffffff811d5b9d
+[    0.000000]  ffff88003d8c3e60 ffffffff811d5e96 ffff88003d8c3e90 ffffffff811d7f83
+[    0.000000]  ffff88003d8c3ec0 ffffffff811d79b1 ffff88003d8c3f38 ffffffff8100c0ca
+[    0.000000]  ffff88003d8c3f50 0000000000000000 0000000000000000 0000000000000000
+                </div>
+                <div class="kernel-info">
+[    0.000000] ---[ end Kernel panic - not syncing: VFS: Unable to mount root fs on unknown-block(0,0) ]---
+                </div>
+            `;
+            
+            linuxPanicScreen.style.display = 'block';
+            
+            // 强制全屏
+            if (linuxPanicScreen.requestFullscreen) {
+                linuxPanicScreen.requestFullscreen();
+            } else if (linuxPanicScreen.webkitRequestFullscreen) {
+                linuxPanicScreen.webkitRequestFullscreen();
+            } else if (linuxPanicScreen.msRequestFullscreen) {
+                linuxPanicScreen.msRequestFullscreen();
+            }
+            
+            // 动态进度条
+            let progress = 0;
+            const progressBar = document.getElementById('panicProgress');
+            const progressInterval = setInterval(() => {
+                progress += Math.floor(Math.random() * 5) + 1;
+                if(progress > 100) progress = 100;
+                progressBar.style.width = progress + '%';
+            }, 100);
+            
+            // 10秒后退出全屏
+            setTimeout(function() {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+                linuxPanicScreen.style.display = 'none';
+                clearInterval(progressInterval);
+            }, 10000);
+        });
+    </script>
+</body>
+</html>
