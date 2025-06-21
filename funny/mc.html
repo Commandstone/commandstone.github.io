@@ -1,0 +1,407 @@
+
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的世界启动器</title>
+    <style>
+        @font-face {
+            font-family: 'Minecraft';
+            src: url('https://fonts.cdnfonts.com/css/minecraft-4') format('woff2');
+        }
+        
+        body {
+            background: url('https://www.minecraft.net/content/dam/minecraft/touchup-2020/minecraft-background.jpg') no-repeat center center fixed;
+            background-size: cover;
+            font-family: 'Minecraft', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: white;
+            overflow: hidden;
+        }
+        
+        .container {
+            background-color: rgba(0, 0, 0, 0.7);
+            border: 8px solid #4d4d4d;
+            border-image: url('https://www.minecraft.net/content/dam/minecraft/touchup-2020/minecraft-border.png') 8;
+            border-radius: 0;
+            padding: 30px;
+            width: 80%;
+            max-width: 800px;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
+        }
+        
+        .menu {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        .menu-item {
+            background-color: rgba(0, 0, 0, 0.5);
+            border: 4px solid #4d4d4d;
+            padding: 15px 25px;
+            font-size: 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .menu-item:hover {
+            background-color: rgba(74, 74, 74, 0.7);
+            transform: scale(1.05);
+        }
+        
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('https://www.minecraft.net/content/dam/minecraft/touchup-2020/minecraft-loading-bg.jpg') no-repeat center center;
+            background-size: cover;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 1000;
+        }
+        
+        .loading-text {
+            font-size: 36px;
+            margin-bottom: 20px;
+            text-align: center;
+            text-shadow: 3px 3px 0 #000;
+        }
+        
+        .progress-container {
+            width: 60%;
+            background-color: rgba(0, 0, 0, 0.5);
+            border: 4px solid #4d4d4d;
+            padding: 5px;
+        }
+        
+        .progress-bar {
+            height: 30px;
+            background: linear-gradient(to right, #4CAF50, #8BC34A);
+            width: 0%;
+            transition: width 0.3s;
+        }
+        
+        .did-you-know {
+            position: absolute;
+            bottom: 100px;
+            left: 20px;
+            right: 20px;
+            text-align: center;
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.9);
+            font-style: italic;
+            text-shadow: 2px 2px 0 #000;
+        }
+        
+        .version-info {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .title {
+            font-size: 48px;
+            text-align: center;
+            margin-bottom: 20px;
+            text-shadow: 4px 4px 0 #000;
+            color: #FFAA00;
+        }
+        
+        .settings-panel {
+            display: none;
+            background-color: rgba(0, 0, 0, 0.8);
+            border: 4px solid #4d4d4d;
+            padding: 20px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 70%;
+            max-width: 500px;
+            z-index: 1001;
+        }
+        
+        .settings-row {
+            margin-bottom: 15px;
+        }
+        
+        .settings-label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 18px;
+        }
+        
+        .settings-input {
+            width: 100%;
+            padding: 8px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 2px solid #4d4d4d;
+            color: white;
+            font-family: 'Minecraft', Arial, sans-serif;
+        }
+        
+        .settings-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        
+        .settings-button {
+            padding: 10px 20px;
+            background-color: rgba(0, 0, 0, 0.5);
+            border: 2px solid #4d4d4d;
+            color: white;
+            cursor: pointer;
+            font-family: 'Minecraft', Arial, sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="title">CST Minecraft Launcher</div>
+        
+        <div class="menu">
+            <div class="menu-item" id="singleplayer">单人游戏</div>
+            <div class="menu-item" id="multiplayer">多人游戏</div>
+            <div class="menu-item" id="settings">设置</div>
+            <div class="menu-item" id="quit">退出游戏</div>
+        </div>
+    </div>
+    
+    <div class="loading-screen" id="loading-screen">
+        <div class="loading-text" id="loading-text">正在加载 Minecraft</div>
+        <div class="progress-container">
+            <div class="progress-bar" id="progress-bar"></div>
+        </div>
+        <div class="did-you-know" id="did-you-know"></div>
+    </div>
+    
+    <div class="settings-panel" id="settings-panel">
+        <div class="settings-row">
+            <label class="settings-label">单人游戏网址:</label>
+            <input type="text" class="settings-input" id="singleplayer-url" value="https://mc.js.cool">
+        </div>
+        <div class="settings-row">
+            <label class="settings-label">退出游戏网址:</label>
+            <input type="text" class="settings-input" id="quit-url" value="https://cstx.zone.id/game/game.html">
+        </div>
+        <div class="settings-row">
+            <label class="settings-label">加载速度(毫秒):</label>
+            <input type="number" class="settings-input" id="loading-speed" value="300" min="50" max="1000">
+        </div>
+        <div class="settings-row">
+            <label class="settings-label">全屏时间(秒):</label>
+            <input type="number" class="settings-input" id="fullscreen-time" value="10" min="1" max="30">
+        </div>
+        <div class="settings-buttons">
+            <button class="settings-button" id="save-settings">保存</button>
+            <button class="settings-button" id="cancel-settings">取消</button>
+        </div>
+    </div>
+    
+    <div class="version-info">启动器版本 v1.1.0 | © 2025 CST Studios</div>
+    
+    <script>
+        // 50条"你知道吗"提示
+        const didYouKnowFacts = [
+            "你知道吗：苦力怕害怕猫，会主动避开它们",
+            "你知道吗：末影人不能看它的下半身，否则会激怒它",
+            "你知道吗：用剪刀剪雪可以获得雪块",
+            "你知道吗：水下呼吸药水可以延长在水下的时间",
+            "你知道吗：用命名牌给羊命名'jeb_'会让它的羊毛不断变色",
+            "你知道吗：用命名牌给兔子命名'Toast'会改变它的纹理",
+            "你知道吗：在雷暴天气睡觉有几率被雷击中",
+            "你知道吗：用金胡萝卜喂养马可以加速繁殖",
+            "你知道吗：用剪刀剪蘑菇牛可以获得5个蘑菇",
+            "你知道吗：用命名牌给卫道士命名'Johnny'会让它攻击所有生物",
+            "你知道吗：用命名牌给幻翼命名可以阻止它们生成",
+            "你知道吗：用骨粉催熟可可豆可以快速获得棕色染料",
+            "你知道吗：用剪刀剪哞菇可以获得蘑菇和皮革",
+            "你知道吗：用命名牌给僵尸村民命名可以阻止它消失",
+            "你知道吗：用命名牌给凋灵骷髅命名可以阻止它消失",
+            "你知道吗：用命名牌给僵尸猪灵命名可以阻止它消失",
+            "你知道吗：用命名牌给僵尸命名可以阻止它在阳光下燃烧",
+            "你知道吗：用命名牌给骷髅命名可以阻止它在阳光下燃烧",
+            "你知道吗：用命名牌给蜘蛛命名可以阻止它在阳光下燃烧",
+            "你知道吗：用命名牌给苦力怕命名可以阻止它爆炸",
+            "你知道吗：用命名牌给末影人命名可以阻止它传送",
+            "你知道吗：用命名牌给女巫命名可以阻止它喝药水",
+            "你知道吗：用命名牌给掠夺者命名可以阻止它攻击",
+            "你知道吗：用命名牌给唤魔者命名可以阻止它召唤恼鬼",
+            "你知道吗：用命名牌给劫掠兽命名可以阻止它攻击",
+            "你知道吗：用命名牌给猪灵命名可以阻止它攻击",
+            "你知道吗：用命名牌给猪灵蛮兵命名可以阻止它攻击",
+            "你知道吗：用命名牌给疣猪兽命名可以阻止它攻击",
+            "你知道吗：用命名牌给僵尸疣猪兽命名可以阻止它攻击",
+            "你知道吗：用命名牌给炽足兽命名可以阻止它攻击",
+            "你知道吗：用命名牌给美西螈命名可以阻止它攻击",
+            "你知道吗：用命名牌给发光鱿鱼命名可以阻止它发光",
+            "你知道吗：用命名牌给山羊命名可以阻止它冲撞",
+            "你知道吗：用命名牌给悦灵命名可以阻止它收集物品",
+            "你知道吗：用命名牌给监守者命名可以阻止它攻击",
+            "你知道吗：用命名牌给青蛙命名可以阻止它吃史莱姆",
+            "你知道吗：用命名牌给蝌蚪命名可以阻止它长大",
+            "你知道吗：用命名牌给骆驼命名可以阻止它坐下",
+            "你知道吗：用命名牌给嗅探兽命名可以阻止它挖掘",
+            "你知道吗：用命名牌给蜜蜂命名可以阻止它攻击",
+            "你知道吗：用命名牌给熊猫命名可以阻止它打喷嚏",
+            "你知道吗：用命名牌给狐狸命名可以阻止它偷东西",
+            "你知道吗：用命名牌给海豚命名可以阻止它给予海豚的恩惠",
+            "你知道吗：用命名牌给海龟命名可以阻止它产卵",
+            "你知道吗：用命名牌给鹦鹉命名可以阻止它模仿声音",
+            "你知道吗：用命名牌给猫命名可以阻止它攻击幻翼",
+            "你知道吗：用命名牌给狼命名可以阻止它攻击羊",
+            "你知道吗：用命名牌给铁傀儡命名可以阻止它攻击",
+            "你知道吗：用命名牌给雪傀儡命名可以阻止它攻击",
+            "你知道吗：在创造模式下对着生物按中键可以获取它的刷怪蛋"
+        ];
+        
+        // 默认设置
+        let settings = {
+            singleplayerUrl: "https://mc.js.cool",
+            quitUrl: "https://cstx.zone.id/game/game.html",
+            loadingSpeed: 300,
+            fullscreenTime: 10
+        };
+        
+        // 从本地存储加载设置
+        if (localStorage.getItem('minecraftSettings')) {
+            settings = JSON.parse(localStorage.getItem('minecraftSettings'));
+        }
+        
+        // 菜单项点击事件
+        document.getElementById('singleplayer').addEventListener('click', startSingleplayer);
+        document.getElementById('multiplayer').addEventListener('click', startLoading);
+        document.getElementById('settings').addEventListener('click', showSettings);
+        document.getElementById('quit').addEventListener('click', startQuit);
+        
+        // 设置面板按钮事件
+        document.getElementById('save-settings').addEventListener('click', saveSettings);
+        document.getElementById('cancel-settings').addEventListener('click', hideSettings);
+        
+        function startSingleplayer() {
+            showLoadingScreen();
+            simulateLoading(() => {
+                window.location.href = settings.singleplayerUrl;
+            });
+        }
+        
+        function startQuit() {
+            showLoadingScreen();
+            simulateLoading(() => {
+                window.location.href = settings.quitUrl;
+            });
+        }
+        
+        function startLoading() {
+            showLoadingScreen();
+            simulateLoading(() => {
+                alert('游戏加载完成！');
+            });
+        }
+        
+        function showSettings() {
+            document.getElementById('singleplayer-url').value = settings.singleplayerUrl;
+            document.getElementById('quit-url').value = settings.quitUrl;
+            document.getElementById('loading-speed').value = settings.loadingSpeed;
+            document.getElementById('fullscreen-time').value = settings.fullscreenTime;
+            document.getElementById('settings-panel').style.display = 'block';
+        }
+        
+        function hideSettings() {
+            document.getElementById('settings-panel').style.display = 'none';
+        }
+        
+        function saveSettings() {
+            settings.singleplayerUrl = document.getElementById('singleplayer-url').value;
+            settings.quitUrl = document.getElementById('quit-url').value;
+            settings.loadingSpeed = parseInt(document.getElementById('loading-speed').value);
+            settings.fullscreenTime = parseInt(document.getElementById('fullscreen-time').value);
+            
+            // 保存到本地存储
+            localStorage.setItem('minecraftSettings', JSON.stringify(settings));
+            
+            hideSettings();
+        }
+        
+        function showLoadingScreen() {
+            // 显示加载屏幕
+            const loadingScreen = document.getElementById('loading-screen');
+            loadingScreen.style.display = 'flex';
+            
+            // 进入全屏模式
+            if (loadingScreen.requestFullscreen) {
+                loadingScreen.requestFullscreen();
+            } else if (loadingScreen.webkitRequestFullscreen) {
+                loadingScreen.webkitRequestFullscreen();
+            } else if (loadingScreen.msRequestFullscreen) {
+                loadingScreen.msRequestFullscreen();
+            }
+        }
+        
+        function simulateLoading(callback) {
+            // 随机显示"你知道吗"提示
+            const didYouKnowElement = document.getElementById('did-you-know');
+            let currentFactIndex = 0;
+            
+            const factInterval = setInterval(() => {
+                didYouKnowElement.textContent = didYouKnowFacts[currentFactIndex];
+                currentFactIndex = (currentFactIndex + 1) % didYouKnowFacts.length;
+            }, 3000);
+            
+            // 模拟加载进度
+            let progress = 0;
+            const progressBar = document.getElementById('progress-bar');
+            const loadingText = document.getElementById('loading-text');
+            const interval = setInterval(() => {
+                progress += Math.random() * 10;
+                if (progress > 100) progress = 100;
+                progressBar.style.width = progress + '%';
+                
+                // 更新加载文本
+                if (progress < 30) {
+                    loadingText.textContent = `初始化游戏环境 (${Math.floor(progress)}%)...`;
+                } else if (progress < 60) {
+                    loadingText.textContent = `加载游戏资源 (${Math.floor(progress)}%)...`;
+                } else if (progress < 90) {
+                    loadingText.textContent = `准备世界生成 (${Math.floor(progress)}%)...`;
+                } else {
+                    loadingText.textContent = `即将完成 (${Math.floor(progress)}%)...`;
+                }
+                
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    clearInterval(factInterval);
+                    setTimeout(() => {
+                        // 退出全屏
+                        if (document.exitFullscreen) {
+                            document.exitFullscreen();
+                        } else if (document.webkitExitFullscreen) {
+                            document.webkitExitFullscreen();
+                        } else if (document.msExitFullscreen) {
+                            document.msExitFullscreen();
+                        }
+                        
+                        callback();
+                    }, settings.fullscreenTime * 1000);
+                }
+            }, settings.loadingSpeed);
+        }
+    </script>
+</body>
+</html>
