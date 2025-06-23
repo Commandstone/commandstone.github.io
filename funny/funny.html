@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>导航</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            overflow: hidden;
+            font-family: 'Microsoft YaHei', sans-serif;
+            color: #fff;
+        }
+        
+        /* 星空画布 */
+        #starCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: linear-gradient(to bottom, #000428, #004e92);
+        }
+        
+        /* 返回按钮 */
+        .home-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 14px;
+            text-decoration: none;
+            z-index: 10;
+            transition: all 0.3s;
+            padding: 5px 10px;
+            border-radius: 4px;
+            backdrop-filter: blur(2px);
+        }
+        .home-btn:hover {
+            color: rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        /* 工具选择区 */
+        .tool-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 25px;
+            max-width: 900px;
+            margin: 100px auto 0;
+            padding: 30px;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .tool-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            padding: 20px 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.4s;
+            backdrop-filter: blur(5px);
+        }
+        
+        .tool-btn:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 20px rgba(0, 78, 146, 0.3);
+        }
+        
+        .tool-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+        
+        .tool-name {
+            font-size: 14px;
+            opacity: 0.85;
+        }
+    </style>
+</head>
+<body>
+    <!-- 星空背景画布 -->
+    <canvas id="starCanvas"></canvas>
+    
+    <!-- 返回按钮 -->
+    <a href="#" class="home-btn">← 返回主页</a>
+    
+    <!-- 工具选择区 -->
+    <div class="tool-container">
+        <div class="tool-btn" data-link="https://cstx.zone.id/funny/cxy.html">
+            <div class="tool-icon">🎨</div>
+            <div class="tool-name">程序员抽签</div>
+        </div>
+        
+        <div class="tool-btn" data-link="https://cstx.zone.id/funny/lp_w.html">
+            <div class="tool-icon">💻</div>
+            <div class="tool-name">windows蓝屏模拟器</div>
+        </div>
+
+        <div class="tool-btn" data-link="https://cstx.zone.id/funny/lp_l.html">
+            <div class="tool-icon">💻</div>
+            <div class="tool-name">linux内核崩溃模拟器</div>
+        </div>
+
+        <div class="tool-btn" data-link="https://cstx.zone.id/funny/lp_m.html">
+            <div class="tool-icon">💻</div>
+            <div class="tool-name">Mac错误模拟器</div>
+        </div>
+        
+        <!-- 可继续添加更多工具 -->
+    </div>
+
+    <script>
+        // ====== 动态星空背景实现 ======
+        const canvas = document.getElementById('starCanvas');
+        const ctx = canvas.getContext('2d');
+        let stars = [];
+        const starCount = 200;
+        
+        // 初始化画布尺寸
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            initStars();
+        }
+        
+        // 创建星星粒子
+        function initStars() {
+            stars = [];
+            for (let i = 0; i < starCount; i++) {
+                stars.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    size: Math.random() * 2 + 0.5,
+                    speed: Math.random() * 0.05,
+                    opacity: Math.random() * 0.5 + 0.3,
+                    angle: Math.random() * Math.PI * 2
+                });
+            }
+        }
+        
+        // 绘制星空
+        function drawStars() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            stars.forEach(star => {
+                // 更新位置（螺旋移动效果）
+                star.x += Math.cos(star.angle) * star.speed;
+                star.y += Math.sin(star.angle) * star.speed;
+                
+                // 边界重置
+                if (star.x < 0 || star.x > canvas.width || 
+                    star.y < 0 || star.y > canvas.height) {
+                    star.x = Math.random() * canvas.width;
+                    star.y = Math.random() * canvas.height;
+                }
+                
+                // 随机闪烁
+                const blink = Math.sin(Date.now() * 0.002 + star.x) * 0.2 + 0.8;
+                
+                // 绘制星星
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255, 255, 255, ${star.opacity * blink})`;
+                ctx.fill();
+            });
+            
+            requestAnimationFrame(drawStars);
+        }
+        
+        // ====== 工具跳转功能 ======
+        document.querySelectorAll('.tool-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const link = this.getAttribute('data-link');
+                window.location.href = link;
+            });
+        });
+        
+        // ====== 初始化页面 ======
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        drawStars();
+    </script>
+</body>
+</html>
