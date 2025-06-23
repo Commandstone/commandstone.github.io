@@ -1,0 +1,169 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CST协会</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: #000;
+            color: #fff;
+        }
+        #starfield {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        .time-container {
+            text-align: center;
+            padding-top: 30px;
+        }
+        .time {
+            font-size: 4em;
+            letter-spacing: 3px;
+        }
+        .date {
+            font-size: 1.8em;
+            opacity: 0.8;
+            margin-top: 10px;
+        }
+        .old-version-link {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: rgba(255,255,255,0.4);
+            text-decoration: none;
+            font-size: 1em;
+            transition: color 0.3s;
+        }
+        .old-version-link:hover {
+            color: rgba(255,255,255,0.8);
+        }
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 180px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 0 15px 15px 0;
+            padding: 15px 0;
+            backdrop-filter: blur(5px);
+        }
+        .nav-item {
+            display: block;
+            color: #fff;
+            text-decoration: none;
+            padding: 12px 25px;
+            margin: 8px 0;
+            font-size: 1.1em;
+            transition: all 0.3s;
+        }
+        .nav-item:hover {
+            background: rgba(255,255,255,0.1);
+            transform: translateX(10px);
+        }
+        .main-content {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 70vh;
+        }
+        .center-image {
+            max-width: 70%;
+            max-height: 70%;
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(0,150,255,0.4);
+        }
+    </style>
+</head>
+<body>
+    <canvas id="starfield"></canvas>
+    <a href="old_cst.html" class="old-version-link">← 返回旧版主页</a>
+    
+    <div class="time-container">
+        <div class="time" id="currentTime">00:00</div>
+        <div class="date" id="currentDate">2025年06月23日</div>
+    </div>
+    
+    <div class="sidebar">
+        <a href="https://cstx.zone.id/tool/tool.html" class="nav-item">🔧工具库</a>
+        <a href="https://cstx.zone.id/blog/blog.html" class="nav-item">🗒️博客</a>
+        <a href="https://cstx.zone.id/mv/mv.html" class="nav-item">💻视频</a>
+        <a href="https://cstx.zone.id/game/game.html" class="nav-item">🎮小游戏</a>
+    </div>
+    
+    <div class="main-content">
+        <img src="CST.png" alt="中心图片" class="center-image">
+    </div>
+
+    <script>
+        // 实时时间更新
+        function updateDateTime() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('zh-CN', {hour12: false, hour: '2-digit', minute:'2-digit'});
+            const dateStr = now.toLocaleDateString('zh-CN', {year: 'numeric', month: '2-digit', day: '2-digit'}).replace(/\//g, '年').replace(/\//g, '月') + '日';
+            
+            document.getElementById('currentTime').textContent = timeStr;
+            document.getElementById('currentDate').textContent = dateStr;
+        }
+        setInterval(updateDateTime, 1000);
+        updateDateTime();
+
+        // 动态星空背景
+        const canvas = document.getElementById('starfield');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const stars = [];
+        const starCount = 300;
+
+        for(let i = 0; i < starCount; i++) {
+            stars.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                radius: Math.random() * 1.5 + 0.5,
+                speed: Math.random() * 0.2 + 0.05,
+                angle: Math.random() * Math.PI * 2
+            });
+        }
+
+        function animateStars() {
+            ctx.fillStyle = 'rgba(0,0,0,0.1)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.fillStyle = 'white';
+            stars.forEach(star => {
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+                ctx.fill();
+                
+                star.x += Math.cos(star.angle) * star.speed;
+                star.y += Math.sin(star.angle) * star.speed;
+                
+                if(star.x < 0 || star.x > canvas.width || star.y < 0 || star.y > canvas.height) {
+                    star.x = Math.random() * canvas.width;
+                    star.y = Math.random() * canvas.height;
+                }
+            });
+            
+            requestAnimationFrame(animateStars);
+        }
+
+        animateStars();
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>
