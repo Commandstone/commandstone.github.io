@@ -1,0 +1,380 @@
+
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CST协会成员列表</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+            background: #000;
+            color: white;
+        }
+        
+        /* 星空背景 */
+        #stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        
+        /* 返回主页按钮 */
+        .home-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            padding: 8px 15px;
+            background: rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.7);
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            z-index: 100;
+        }
+        
+        .home-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+        }
+        
+        /* 主容器 */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 80px 20px;
+            text-align: center;
+        }
+        
+        h1 {
+            margin-bottom: 50px;
+            font-size: 2.5em;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+        
+        /* 成员卡片网格 */
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 30px;
+            padding: 20px;
+        }
+        
+        /* 成员卡片 */
+        .member-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .member-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .member-img {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            margin-bottom: 15px;
+        }
+        
+        .member-name {
+            font-size: 1.5em;
+            margin: 10px 0;
+        }
+        
+        .member-position {
+            color: #aaa;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+        }
+        
+        /* 详情弹窗 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: rgba(20, 20, 30, 0.9);
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 600px;
+            width: 80%;
+            position: relative;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: #aaa;
+        }
+        
+        .modal-img {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin: 0 auto 20px;
+            display: block;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .contact-info {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .contact-item {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+        }
+        
+        .contact-icon {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <!-- 星空背景 -->
+    <canvas id="stars"></canvas>
+    
+    <!-- 返回主页按钮 -->
+    <button class="home-btn" onclick="window.location.href='cst.html'">← 返回主页</button>
+    
+    <!-- 主内容 -->
+    <div class="container">
+        <h1>CST协会成员列表</h1>
+        
+        <div class="team-grid">
+            <!-- 成员1 -->
+            <div class="member-card" onclick="openModal('member1')">
+                <img src="https://via.placeholder.com/150" alt="Command_stone" class="member-img">
+                <h3 class="member-name">Command_stone</h3>
+                <p class="member-position">CST协会会长</p>
+            </div>
+            
+            <!-- 成员2 -->
+            <div class="member-card" onclick="openModal('member2')">
+                <img src="https://via.placeholder.com/150" alt="Command_star" class="member-img">
+                <h3 class="member-name">Command_star</h3>
+                <p class="member-position">CST协会副会长</p>
+            </div>
+            
+            <!-- 成员3 -->
+            <div class="member-card" onclick="openModal('member3')">
+                <img src="https://via.placeholder.com/150" alt="王五" class="member-img">
+                <h3 class="member-name">王五</h3>
+                <p class="member-position">UI设计师</p>
+            </div>
+            
+            <!-- 成员4 -->
+            <div class="member-card" onclick="openModal('member4')">
+                <img src="https://via.placeholder.com/150" alt="赵六" class="member-img">
+                <h3 class="member-name">赵六</h3>
+                <p class="member-position">产品经理</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 成员详情弹窗 -->
+    <div id="member1" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <img src="https://via.placeholder.com/150" alt="Command_stone" class="modal-img">
+            <h2>张三</h2>
+            <p class="member-position">CST协会会长</p>
+            <p>2年开发经验,半精通C++,半精通Java,负责协会主要产品的设计和开发工作。</p>
+            
+            <div class="contact-info">
+                <h3>联系方式</h3>
+                <div class="contact-item">
+                    <span class="contact-icon">📧</span>
+                    <span>command_stone_luck@outlook.com</span>
+                </div>
+                <div class="contact-item">
+                    <span class="contact-icon">📱</span>
+                    <span>+86 19841815517</span>
+                </div>
+                <div class="contact-item">
+                    <span class="contact-icon">🌍</span>
+                    <span>QQ:3931650248</span>
+                </div>
+                <div class="contact-item">
+                    <span class="contact-icon">🌐</span>
+                    <span>github.com/Command_stone</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="member2" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <img src="https://via.placeholder.com/150" alt="Command_star" class="modal-img">
+            <h2>Command_star</h2>
+            <p class="member-position">Command_star</p>
+            <p>资深Minecraft玩家，擅长建筑和制作NBT物品，负责在游戏里执行计划。</p>
+            
+            <div class="contact-info">
+                <h3>联系方式</h3>
+                <div class="contact-item">
+                    <span class="contact-icon">📧</span>
+                    <span>cst@cdst.dpdns.org</span>
+                </div>
+                <div class="contact-item">
+                    <span class="contact-icon">📱</span>
+                    <span>未知</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="member3" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <img src="https://via.placeholder.com/150" alt="王五" class="modal-img">
+            <h2>王五</h2>
+            <p class="member-position">UI设计师</p>
+            <p>创意设计师，拥有出色的视觉设计能力和用户体验洞察力，负责产品的整体视觉风格和交互设计。</p>
+            
+            <div class="contact-info">
+                <h3>联系方式</h3>
+                <div class="contact-item">
+                    <span class="contact-icon">📧</span>
+                    <span>wangwu@example.com</span>
+                </div>
+                <div class="contact-item">
+                    <span class="contact-icon">📱</span>
+                    <span>13700137000</span>
+                </div>
+                <div class="contact-item">
+                    <span class="contact-icon">🎨</span>
+                    <span>behance.net/wangwu</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="member4" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <img src="https://via.placeholder.com/150" alt="赵六" class="modal-img">
+            <h2>赵六</h2>
+            <p class="member-position">产品经理</p>
+            <p>负责产品规划和需求分析，协调开发团队和业务部门，确保产品按时高质量交付。</p>
+            
+            <div class="contact-info">
+                <h3>联系方式</h3>
+                <div class="contact-item">
+                    <span class="contact-icon">📧</span>
+                    <span>zhaoliu@example.com</span>
+                </div>
+                <div class="contact-item">
+                    <span class="contact-icon">📱</span>
+                    <span>13600136000</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 星空背景动画
+        const canvas = document.getElementById('stars');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+        const stars = [];
+        const starCount = 200;
+        
+        for (let i = 0; i < starCount; i++) {
+            stars.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                radius: Math.random() * 1.5,
+                vx: Math.floor(Math.random() * 50) - 25,
+                vy: Math.floor(Math.random() * 50) - 25
+            });
+        }
+        
+        function drawStars() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'white';
+            
+            stars.forEach(star => {
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+                ctx.fill();
+                
+                star.x += star.vx / 100;
+                star.y += star.vy / 100;
+                
+                if (star.x < 0 || star.x > canvas.width) star.vx = -star.vx;
+                if (star.y < 0 || star.y > canvas.height) star.vy = -star.vy;
+            });
+            
+            requestAnimationFrame(drawStars);
+        }
+        
+        drawStars();
+        
+        // 弹窗控制
+        function openModal(memberId) {
+            document.getElementById(memberId).style.display = 'flex';
+        }
+        
+        function closeModal() {
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.style.display = 'none';
+            });
+        }
+        
+        // 点击弹窗外部关闭
+        window.onclick = function(event) {
+            if (event.target.className === 'modal') {
+                closeModal();
+            }
+        }
+        
+        // 响应式调整
+        window.addEventListener('resize', function() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>
