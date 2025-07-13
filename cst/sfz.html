@@ -1,0 +1,231 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CST协会身份证生成器</title>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            width: 100%;
+            max-width: 600px;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+        input[type="text"], input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #2c3e50;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            margin-top: 10px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #1a252f;
+        }
+        #id-card {
+            margin-top: 30px;
+            padding: 25px;
+            border-radius: 10px;
+            background-color: #000;
+            color: white;
+            display: none;
+            position: relative;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+        #id-card h2 {
+            text-align: center;
+            color: #fff;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+        }
+        .card-content {
+            display: flex;
+            align-items: center;
+        }
+        #card-avatar {
+            width: 120px;
+            height: 120px;
+            border: 3px solid #444;
+            border-radius: 5px;
+            margin-right: 25px;
+            object-fit: cover;
+        }
+        .card-info {
+            flex: 1;
+        }
+        .card-info p {
+            margin: 12px 0;
+            font-size: 16px;
+        }
+        .card-info strong {
+            color: #ccc;
+        }
+        #download-btn {
+            background-color: #e74c3c;
+            margin-top: 20px;
+        }
+        #download-btn:hover {
+            background-color: #c0392b;
+        }
+        .cst-logo {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>CST协会身份证生成器</h1>
+        
+        <div class="form-group">
+            <label for="name">姓名:</label>
+            <input type="text" id="name" placeholder="请输入您的姓名">
+        </div>
+        
+        <div class="form-group">
+            <label for="id-number">编号:</label>
+            <input type="text" id="id-number" placeholder="请输入3位编号(如001)">
+        </div>
+        
+        <div class="form-group">
+            <label for="avatar">头像:</label>
+            <input type="file" id="avatar" accept="image/*">
+        </div>
+        
+        <button onclick="generateID()">生成身份证</button>
+        
+        <div id="id-card">
+            <div class="cst-logo">CST</div>
+            <h2>CST协会身份证</h2>
+            <div class="card-content">
+                <img id="card-avatar" src="#" alt="会员头像">
+                <div class="card-info">
+                    <p><strong>姓名:</strong> <span id="card-name"></span></p>
+                    <p><strong>编号:</strong> CST-<span id="card-id"></span></p>
+                    <p><strong>等级:</strong> <span id="card-level"></span></p>
+                    <p><strong>有效期:</strong> 2025-2026</p>
+                </div>
+            </div>
+            <button id="download-btn" onclick="downloadID()">下载身份证</button>
+        </div>
+    </div>
+
+    <script>
+        // 生成身份证
+        function generateID() {
+            const name = document.getElementById('name').value;
+            const idNumber = document.getElementById('id-number').value;
+            const avatar = document.getElementById('avatar').files[0];
+            
+            if (!name || !idNumber || !avatar) {
+                alert('请填写所有信息！');
+                return;
+            }
+            
+            if (!/^\d{3}$/.test(idNumber)) {
+                alert('编号必须是3位数字！');
+                return;
+            }
+            
+            // 设置等级
+            let level = '';
+            switch(idNumber) {
+                case '324':
+                    level = 'V级人员';
+                    break;
+                case '012':
+                    level = 'IV级人员';
+                    break;
+                case '038':
+                    level = 'III级人员';
+                    break;
+                case '314':
+                    level = 'II级人员';
+                    break;
+                case '315':
+                    level = 'II级人员';
+                    break;
+                case '316':
+                    level = 'II级人员';
+                    break;
+                default:
+                    level = 'I级人员';
+            }
+            
+            // 显示身份证
+            document.getElementById('card-name').textContent = name;
+            document.getElementById('card-id').textContent = idNumber;
+            document.getElementById('card-level').textContent = level;
+            
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                document.getElementById('card-avatar').src = event.target.result;
+            }
+            reader.readAsDataURL(avatar);
+            
+            document.getElementById('id-card').style.display = 'block';
+        }
+        
+        // 下载身份证
+        function downloadID() {
+            const idCard = document.getElementById('id-card');
+            
+            if (idCard.style.display === 'none') {
+                alert('请先生成身份证！');
+                return;
+            }
+            
+            html2canvas(idCard).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'CST协会身份证.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
+        }
+    </script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+</body>
+</html>
