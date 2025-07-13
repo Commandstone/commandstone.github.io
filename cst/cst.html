@@ -1,0 +1,143 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>星空导航</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            background: #000;
+            color: white;
+        }
+        #stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 2rem;
+            text-shadow: 0 0 10px rgba(255,255,255,0.5);
+        }
+        .nav-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            width: 80%;
+            max-width: 800px;
+        }
+        .nav-btn {
+            padding: 15px 25px;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid #4fc3f7;
+            color: white;
+            font-size: 1.2rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+        .nav-btn:hover {
+            background: rgba(79, 195, 247, 0.3);
+            transform: translateY(-5px);
+            box-shadow: 0 0 15px #4fc3f7;
+        }
+        .home-btn {
+            position: fixed;
+            left: 20px;
+            bottom: 20px;
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .home-btn:hover {
+            background: rgba(255,255,255,0.4);
+        }
+    </style>
+</head>
+<body>
+    <canvas id="stars"></canvas>
+    
+    <div class="container">
+        <h1>星空导航</h1>
+        <div class="nav-buttons">
+            <button class="nav-btn" onclick="window.location.href='page1.html'">功能一</button>
+            <button class="nav-btn" onclick="window.location.href='page2.html'">功能二</button>
+            <button class="nav-btn" onclick="window.location.href='page3.html'">功能三</button>
+            <button class="nav-btn" onclick="window.location.href='page4.html'">功能四</button>
+            <button class="nav-btn" onclick="window.location.href='page5.html'">功能五</button>
+            <button class="nav-btn" onclick="window.location.href='page6.html'">功能六</button>
+        </div>
+    </div>
+    
+    <button class="home-btn" onclick="window.location.href='index.html'">返回主页</button>
+
+    <script>
+        // 星空背景动画
+        const canvas = document.getElementById('stars');
+        const ctx = canvas.getContext('2d');
+        
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+        const stars = [];
+        const starCount = 200;
+        
+        for (let i = 0; i < starCount; i++) {
+            stars.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                radius: Math.random() * 1.5,
+                vx: Math.floor(Math.random() * 50) - 25,
+                vy: Math.floor(Math.random() * 50) - 25
+            });
+        }
+        
+        function drawStars() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'white';
+            
+            stars.forEach(star => {
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+                ctx.fill();
+                
+                star.x += star.vx / 100;
+                star.y += star.vy / 100;
+                
+                if (star.x < 0 || star.x > canvas.width) star.vx = -star.vx;
+                if (star.y < 0 || star.y > canvas.height) star.vy = -star.vy;
+            });
+            
+            requestAnimationFrame(drawStars);
+        }
+        
+        drawStars();
+        
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>
