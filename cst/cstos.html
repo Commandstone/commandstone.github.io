@@ -1,0 +1,1336 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CST OS</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Courier New', monospace;
+        }
+
+        body {
+            overflow: hidden;
+            background: #000;
+        }
+
+        /* 开机动画 */
+        .boot-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 1s ease;
+        }
+
+        .boot-logo {
+            font-size: 60px;
+            font-weight: bold;
+            color: #00ff00;
+            margin-bottom: 30px;
+            text-shadow: 0 0 20px #00ff00, 0 0 40px #00ff00;
+            animation: glitch 2s infinite, scanline 3s linear infinite;
+        }
+
+        .boot-progress {
+            width: 400px;
+            height: 6px;
+            background: #333;
+            border-radius: 3px;
+            overflow: hidden;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+        }
+
+        .boot-progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #00ff00, #008000);
+            transition: width 0.1s ease;
+            box-shadow: 0 0 15px #00ff00;
+        }
+
+        @keyframes glitch {
+            0% { transform: translate(0); }
+            20% { transform: translate(-3px, 3px); }
+            40% { transform: translate(-3px, -3px); }
+            60% { transform: translate(3px, 3px); }
+            80% { transform: translate(3px, -3px); }
+            100% { transform: translate(0); }
+        }
+
+        @keyframes scanline {
+            0% { text-shadow: 0 0 20px #00ff00, 0 0 40px #00ff00; }
+            50% { text-shadow: 0 0 30px #00ff00, 0 0 60px #00ff00; }
+            100% { text-shadow: 0 0 20px #00ff00, 0 0 40px #00ff00; }
+        }
+
+        /* 登录界面 */
+        .login-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+        }
+
+        .login-box {
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 50px;
+            width: 400px;
+            box-shadow: 0 0 50px rgba(0, 255, 0, 0.3);
+            border: 1px solid rgba(0, 255, 0, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-box::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(0, 255, 0, 0.1), transparent);
+            transform: rotate(45deg);
+            animation: shine 3s infinite;
+        }
+
+        @keyframes shine {
+            0% { transform: rotate(45deg) translateX(-100%); }
+            100% { transform: rotate(45deg) translateX(100%); }
+        }
+
+        .login-title {
+            text-align: center;
+            color: #00ff00;
+            margin-bottom: 40px;
+            font-size: 32px;
+            text-shadow: 0 0 10px #00ff00;
+            position: relative;
+            z-index: 1;
+        }
+
+        .login-input {
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 25px;
+            border: 2px solid #00ff00;
+            border-radius: 10px;
+            background: rgba(0, 20, 0, 0.5);
+            color: #00ff00;
+            font-size: 18px;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .login-input:focus {
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+            background: rgba(0, 30, 0, 0.7);
+        }
+
+        .login-input::placeholder {
+            color: rgba(0, 255, 0, 0.7);
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(45deg, #00ff00, #008000);
+            color: #000;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            z-index: 1;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 25px rgba(0, 255, 0, 0.5);
+        }
+
+        .time-display {
+            color: #00ff00;
+            font-size: 16px;
+            text-align: center;
+            margin-top: 30px;
+            text-shadow: 0 0 5px #00ff00;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* 主系统界面 */
+        .desktop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, #ff0080, #0080ff);
+            display: none;
+            flex-direction: column;
+        }
+
+        /* 桌面图标 */
+        .desktop-icons {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, 90px);
+            gap: 25px;
+            padding: 30px;
+        }
+
+        .desktop-icon {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            padding: 15px;
+            border-radius: 15px;
+            transition: all 0.3s;
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .desktop-icon:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .icon-img {
+            width: 56px;
+            height: 56px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 8px;
+            font-size: 28px;
+            transition: all 0.3s;
+        }
+
+        .desktop-icon:hover .icon-img {
+            transform: scale(1.1);
+        }
+
+        .icon-text {
+            color: white;
+            font-size: 13px;
+            text-align: center;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+        }
+
+        /* 任务栏 */
+        .taskbar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 50px;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            z-index: 100;
+            border-top: 1px solid rgba(0, 255, 0, 0.3);
+        }
+
+        .start-btn {
+            background: linear-gradient(45deg, #00ff00, #008000);
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            margin-right: 15px;
+            transition: all 0.3s;
+        }
+
+        .start-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 255, 0, 0.4);
+        }
+
+        .taskbar-buttons {
+            display: flex;
+            gap: 10px;
+            flex: 1;
+        }
+
+        .taskbar-btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .taskbar-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .taskbar-btn.active {
+            background: rgba(0, 255, 0, 0.3);
+            border-color: #00ff00;
+        }
+
+        .taskbar-time {
+            color: #00ff00;
+            margin-left: auto;
+            font-size: 16px;
+            padding: 0 15px;
+            text-shadow: 0 0 5px #00ff00;
+        }
+
+        /* 开始菜单 */
+        .start-menu {
+            position: fixed;
+            bottom: 50px;
+            left: 15px;
+            width: 300px;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            padding: 15px;
+            display: none;
+            z-index: 101;
+            border: 1px solid rgba(0, 255, 0, 0.3);
+        }
+
+        .menu-item {
+            padding: 12px 15px;
+            cursor: pointer;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            transition: all 0.3s;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 16px;
+        }
+
+        .menu-item:hover {
+            background: rgba(0, 255, 0, 0.2);
+            transform: translateX(5px);
+        }
+
+        /* 窗口 */
+        .window {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            min-width: 400px;
+            min-height: 300px;
+            display: none;
+            flex-direction: column;
+            z-index: 10;
+            border: 1px solid rgba(0, 255, 0, 0.3);
+        }
+
+        .window-header {
+            background: rgba(0, 255, 0, 0.1);
+            padding: 15px;
+            border-radius: 15px 15px 0 0;
+            cursor: move;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(0, 255, 0, 0.2);
+        }
+
+        .window-title {
+            color: #00ff00;
+            font-weight: bold;
+            font-size: 16px;
+            text-shadow: 0 0 5px #00ff00;
+        }
+
+        .window-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .window-btn {
+            width: 25px;
+            height: 25px;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .close-btn {
+            background: #ff5f57;
+            color: white;
+        }
+
+        .minimize-btn {
+            background: #ffbd2e;
+            color: white;
+        }
+
+        .maximize-btn {
+            background: #28c940;
+            color: white;
+        }
+
+        .window-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .window-content {
+            padding: 20px;
+            flex: 1;
+            overflow: auto;
+            color: white;
+        }
+
+        /* 文件管理器 */
+        .file-manager {
+            width: 700px;
+            height: 500px;
+        }
+
+        .file-toolbar {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .file-btn {
+            padding: 10px 15px;
+            background: linear-gradient(45deg, #00ff00, #008000);
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .file-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 255, 0, 0.4);
+        }
+
+        .file-list {
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            height: 350px;
+            overflow: auto;
+            background: rgba(0, 20, 0, 0.3);
+        }
+
+        .file-item {
+            padding: 12px 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .file-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .file-item.selected {
+            background: rgba(0, 255, 0, 0.2);
+            border-left: 3px solid #00ff00;
+        }
+
+        /* 游戏样式 */
+        .game-container {
+            width: 600px;
+            height: 450px;
+        }
+
+        .game-area {
+            width: 100%;
+            height: 320px;
+            background: #000;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            overflow: hidden;
+            border: 1px solid rgba(0, 255, 0, 0.3);
+        }
+
+        .game-canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .game-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .game-instructions {
+            color: #aaa;
+            font-size: 14px;
+            text-align: center;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+        }
+
+        /* 设置窗口 */
+        .settings-window {
+            width: 500px;
+            height: 400px;
+        }
+
+        .background-selector {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .bg-option {
+            width: 100px;
+            height: 80px;
+            border-radius: 10px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .bg-option:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .bg-option.active {
+            border-color: #00ff00;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+        }
+
+        .bg-option span {
+            position: absolute;
+            bottom: 5px;
+            left: 5px;
+            color: white;
+            font-size: 12px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+        }
+
+        .system-info {
+            margin-top: 25px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        .system-info h3 {
+            color: #00ff00;
+            margin-bottom: 10px;
+            text-shadow: 0 0 5px #00ff00;
+        }
+
+        .system-info p {
+            color: #ccc;
+            font-size: 14px;
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- 开机动画 -->
+    <div class="boot-screen" id="bootScreen">
+        <div class="boot-logo">CST OS</div>
+        <div class="boot-progress">
+            <div class="boot-progress-bar" id="progressBar"></div>
+        </div>
+    </div>
+
+    <!-- 登录界面 -->
+    <div class="login-screen" id="loginScreen">
+        <div class="login-box">
+            <div class="login-title">CST OS 登录</div>
+            <input type="text" class="login-input" placeholder="用户名" value="admin">
+            <input type="password" class="login-input" placeholder="密码" value="123456">
+            <button class="login-btn" onclick="login()">登录系统</button>
+            <div class="time-display" id="loginTime"></div>
+        </div>
+    </div>
+
+    <!-- 主桌面 -->
+    <div class="desktop" id="desktop">
+        <!-- 桌面图标 -->
+        <div class="desktop-icons">
+            <div class="desktop-icon" onclick="openFileManager()">
+                <div class="icon-img">📁</div>
+                <div class="icon-text">文件管理器</div>
+            </div>
+            <div class="desktop-icon" onclick="openSnakeGame()">
+                <div class="icon-img">🐍</div>
+                <div class="icon-text">贪吃蛇</div>
+            </div>
+            <div class="desktop-icon" onclick="openShooterGame()">
+                <div class="icon-img">🔫</div>
+                <div class="icon-text">枪战游戏</div>
+            </div>
+            <div class="desktop-icon" onclick="openSettings()">
+                <div class="icon-img">⚙️</div>
+                <div class="icon-text">系统设置</div>
+            </div>
+        </div>
+
+        <!-- 任务栏 -->
+        <div class="taskbar">
+            <button class="start-btn" onclick="toggleStartMenu()">开始</button>
+            <div class="taskbar-buttons" id="taskbarButtons">
+                <!-- 任务栏按钮将在这里动态添加 -->
+            </div>
+            <div class="taskbar-time" id="taskbarTime"></div>
+        </div>
+
+        <!-- 开始菜单 -->
+        <div class="start-menu" id="startMenu">
+            <div class="menu-item" onclick="openFileManager()">📁 文件管理器</div>
+            <div class="menu-item" onclick="openSnakeGame()">🐍 贪吃蛇</div>
+            <div class="menu-item" onclick="openShooterGame()">🔫 枪战游戏</div>
+            <div class="menu-item" onclick="openSettings()">⚙️ 系统设置</div>
+            <div class="menu-item" onclick="logout()">🚪 注销系统</div>
+        </div>
+
+        <!-- 文件管理器窗口 -->
+        <div class="window file-manager" id="fileManager" style="top: 100px; left: 100px;">
+            <div class="window-header">
+                <div class="window-title">📁 文件管理器</div>
+                <div class="window-controls">
+                    <button class="window-btn minimize-btn" onclick="minimizeWindow('fileManager')">−</button>
+                    <button class="window-btn maximize-btn" onclick="maximizeWindow('fileManager')">□</button>
+                    <button class="window-btn close-btn" onclick="closeWindow('fileManager')">×</button>
+                </div>
+            </div>
+            <div class="window-content">
+                <div class="file-toolbar">
+                    <button class="file-btn" onclick="createFile()">➕ 新建文件</button>
+                    <button class="file-btn" onclick="deleteFile()">🗑️ 删除文件</button>
+                    <button class="file-btn" onclick="editFile()">✏️ 编辑文件</button>
+                </div>
+                <div class="file-list" id="fileList">
+                    <div class="file-item" data-filename="我的文档.txt">📄 我的文档.txt</div>
+                    <div class="file-item" data-filename="项目计划.doc">📝 项目计划.doc</div>
+                    <div class="file-item" data-filename="学习笔记.pdf">📚 学习笔记.pdf</div>
+                    <div class="file-item" data-filename="照片.jpg">🖼️ 照片.jpg</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 贪吃蛇游戏窗口 -->
+        <div class="window game-container" id="snakeGame" style="top: 150px; left: 200px;">
+            <div class="window-header">
+                <div class="window-title">🐍 贪吃蛇游戏</div>
+                <div class="window-controls">
+                    <button class="window-btn minimize-btn" onclick="minimizeWindow('snakeGame')">−</button>
+                    <button class="window-btn maximize-btn" onclick="maximizeWindow('snakeGame')">□</button>
+                    <button class="window-btn close-btn" onclick="closeWindow('snakeGame')">×</button>
+                </div>
+            </div>
+            <div class="window-content">
+                <div class="game-area">
+                    <canvas class="game-canvas" id="snakeCanvas"></canvas>
+                </div>
+                <div class="game-controls">
+                    <button class="file-btn" onclick="startSnakeGame()">▶️ 开始游戏</button>
+                    <button class="file-btn" onclick="stopSnakeGame()">⏹️ 停止游戏</button>
+                    <span id="snakeScore">得分: 0</span>
+                </div>
+                <div class="game-instructions">
+                    使用方向键控制蛇的移动
+                </div>
+            </div>
+        </div>
+
+        <!-- 枪战游戏窗口 -->
+        <div class="window game-container" id="shooterGame" style="top: 120px; left: 150px;">
+            <div class="window-header">
+                <div class="window-title">🔫 枪战游戏</div>
+                <div class="window-controls">
+                    <button class="window-btn minimize-btn" onclick="minimizeWindow('shooterGame')">−</button>
+                    <button class="window-btn maximize-btn" onclick="maximizeWindow('shooterGame')">□</button>
+                    <button class="window-btn close-btn" onclick="closeWindow('shooterGame')">×</button>
+                </div>
+            </div>
+            <div class="window-content">
+                <div class="game-area">
+                    <canvas class="game-canvas" id="shooterCanvas"></canvas>
+                </div>
+                <div class="game-controls">
+                    <button class="file-btn" onclick="startShooterGame()">▶️ 开始游戏</button>
+                    <button class="file-btn" onclick="stopShooterGame()">⏹️ 停止游戏</button>
+                    <span id="shooterScore">得分: 0</span>
+                </div>
+                <div class="game-instructions">
+                    使用鼠标点击射击敌人，按WASD移动
+                </div>
+            </div>
+        </div>
+
+        <!-- 设置窗口 -->
+        <div class="window settings-window" id="settings" style="top: 200px; left: 300px;">
+            <div class="window-header">
+                <div class="window-title">⚙️ 系统设置</div>
+                <div class="window-controls">
+                    <button class="window-btn minimize-btn" onclick="minimizeWindow('settings')">−</button>
+                    <button class="window-btn maximize-btn" onclick="maximizeWindow('settings')">□</button>
+                    <button class="window-btn close-btn" onclick="closeWindow('settings')">×</button>
+                </div>
+            </div>
+            <div class="window-content">
+                <h3>🎨 桌面背景设置</h3>
+                <div class="background-selector">
+                    <div class="bg-option active" style="background: linear-gradient(45deg, #ff0080, #0080ff);" onclick="changeBackground('default')">
+                        <span>默认</span>
+                    </div>
+                    <div class="bg-option" style="background: linear-gradient(45deg, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff);" onclick="changeBackground('rainbow')">
+                        <span>彩虹</span>
+                    </div>
+                    <div class="bg-option" style="background: linear-gradient(45deg, #87CEEB, #F0E68C);" onclick="changeBackground('beach')">
+                        <span>海滩</span>
+                    </div>
+                    <div class="bg-option" style="background: linear-gradient(45deg, #667eea, #764ba2);" onclick="changeBackground('purple')">
+                        <span>紫色</span>
+                    </div>
+                    <div class="bg-option" style="background: linear-gradient(45deg, #f093fb, #f5576c);" onclick="changeBackground('pink')">
+                        <span>粉色</span>
+                    </div>
+                    <div class="bg-option" style="background: linear-gradient(45deg, #43e97b, #38f9d7);" onclick="changeBackground('green')">
+                        <span>绿色</span>
+                    </div>
+                </div>
+                <div class="system-info">
+                    <h3>💻 系统信息</h3>
+                    <p>操作系统: CST OS Ultimate Edition</p>
+                    <p>版本: 2024.1.0</p>
+                    <p>内核版本: 5.15.0-cst</p>
+                    <p>架构: x86_64</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let isLoggedIn = false;
+        let isStartMenuOpen = false;
+        let snakeGameInterval = null;
+        let shooterGameInterval = null;
+        let snake = [];
+        let food = {};
+        let direction = 'right';
+        let snakeScore = 0;
+        let player = { x: 50, y: 50 };
+        let enemies = [];
+        let bullets = [];
+        let shooterScore = 0;
+        let keys = {};
+        let openWindows = [];
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            startBootAnimation();
+            updateTime();
+            setInterval(updateTime, 1000);
+        });
+
+        // 更新时间显示
+        function updateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleString('zh-CN');
+            if (document.getElementById('loginTime')) {
+                document.getElementById('loginTime').textContent = timeString;
+            }
+            if (document.getElementById('taskbarTime')) {
+                document.getElementById('taskbarTime').textContent = timeString;
+            }
+        }
+
+        // 开机动画
+        function startBootAnimation() {
+            const progressBar = document.getElementById('progressBar');
+            let progress = 0;
+            
+            const interval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        document.getElementById('bootScreen').style.opacity = '0';
+                        setTimeout(() => {
+                            document.getElementById('bootScreen').style.display = 'none';
+                            document.getElementById('loginScreen').style.display = 'flex';
+                        }, 1000);
+                    }, 500);
+                }
+                progressBar.style.width = progress + '%';
+            }, 80);
+        }
+
+        // 登录系统
+        function login() {
+            isLoggedIn = true;
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('desktop').style.display = 'flex';
+        }
+
+        // 注销系统
+        function logout() {
+            isLoggedIn = false;
+            document.getElementById('desktop').style.display = 'none';
+            document.getElementById('loginScreen').style.display = 'flex';
+            closeAllWindows();
+        }
+
+        // 切换开始菜单
+        function toggleStartMenu() {
+            const menu = document.getElementById('startMenu');
+            isStartMenuOpen = !isStartMenuOpen;
+            menu.style.display = isStartMenuOpen ? 'block' : 'none';
+        }
+
+        // 关闭所有窗口
+        function closeAllWindows() {
+            const windows = document.querySelectorAll('.window');
+            windows.forEach(window => {
+                window.style.display = 'none';
+            });
+            openWindows = [];
+            updateTaskbar();
+            stopAllGames();
+        }
+
+        // 停止所有游戏
+        function stopAllGames() {
+            if (snakeGameInterval) {
+                clearInterval(snakeGameInterval);
+                snakeGameInterval = null;
+            }
+            if (shooterGameInterval) {
+                clearInterval(shooterGameInterval);
+                shooterGameInterval = null;
+            }
+        }
+
+        // 更新任务栏
+        function updateTaskbar() {
+            const taskbarButtons = document.getElementById('taskbarButtons');
+            taskbarButtons.innerHTML = '';
+            
+            openWindows.forEach(windowId => {
+                const button = document.createElement('button');
+                button.className = 'taskbar-btn';
+                button.onclick = () => showWindow(windowId);
+                
+                let title = '';
+                switch(windowId) {
+                    case 'fileManager': title = '📁 文件管理器'; break;
+                    case 'snakeGame': title = '🐍 贪吃蛇'; break;
+                    case 'shooterGame': title = '🔫 枪战游戏'; break;
+                    case 'settings': title = '⚙️ 设置'; break;
+                }
+                
+                button.innerHTML = title;
+                taskbarButtons.appendChild(button);
+            });
+        }
+
+        // 打开应用程序
+        function openFileManager() {
+            document.getElementById('fileManager').style.display = 'flex';
+            addToOpenWindows('fileManager');
+            isStartMenuOpen = false;
+            document.getElementById('startMenu').style.display = 'none';
+        }
+
+        function openSnakeGame() {
+            document.getElementById('snakeGame').style.display = 'flex';
+            addToOpenWindows('snakeGame');
+            isStartMenuOpen = false;
+            document.getElementById('startMenu').style.display = 'none';
+        }
+
+        function openShooterGame() {
+            document.getElementById('shooterGame').style.display = 'flex';
+            addToOpenWindows('shooterGame');
+            isStartMenuOpen = false;
+            document.getElementById('startMenu').style.display = 'none';
+        }
+
+        function openSettings() {
+            document.getElementById('settings').style.display = 'flex';
+            addToOpenWindows('settings');
+            isStartMenuOpen = false;
+            document.getElementById('startMenu').style.display = 'none';
+        }
+
+        function addToOpenWindows(windowId) {
+            if (!openWindows.includes(windowId)) {
+                openWindows.push(windowId);
+                updateTaskbar();
+            }
+        }
+
+        // 窗口操作
+        function closeWindow(id) {
+            document.getElementById(id).style.display = 'none';
+            openWindows = openWindows.filter(windowId => windowId !== id);
+            updateTaskbar();
+            if (id === 'snakeGame') stopSnakeGame();
+            if (id === 'shooterGame') stopShooterGame();
+        }
+
+        function minimizeWindow(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+
+        function maximizeWindow(id) {
+            const window = document.getElementById(id);
+            if (window.style.width === '90vw') {
+                window.style.width = '';
+                window.style.height = '';
+                window.style.top = '100px';
+                window.style.left = '100px';
+            } else {
+                window.style.width = '90vw';
+                window.style.height = '80vh';
+                window.style.top = '10vh';
+                window.style.left = '5vw';
+            }
+        }
+
+        function showWindow(windowId) {
+            document.getElementById(windowId).style.display = 'flex';
+        }
+
+        // 文件管理器功能
+        function createFile() {
+            const filename = prompt('请输入文件名:');
+            if (filename) {
+                const fileList = document.getElementById('fileList');
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                fileItem.setAttribute('data-filename', filename);
+                fileItem.textContent = `📄 ${filename}`;
+                fileList.appendChild(fileItem);
+            }
+        }
+
+        function deleteFile() {
+            const selected = document.querySelector('.file-item.selected');
+            if (selected) {
+                if (confirm('确定要删除这个文件吗?')) {
+                    selected.remove();
+                }
+            } else {
+                alert('请先选择一个文件');
+            }
+        }
+
+        function editFile() {
+            const selected = document.querySelector('.file-item.selected');
+            if (selected) {
+                const filename = selected.getAttribute('data-filename');
+                const content = prompt(`编辑文件 ${filename}:`, '在此输入文件内容...');
+                if (content !== null) {
+                    alert(`文件 ${filename} 已保存`);
+                }
+            } else {
+                alert('请先选择一个文件');
+            }
+        }
+
+        // 文件选择
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('file-item')) {
+                document.querySelectorAll('.file-item').forEach(item => {
+                    item.classList.remove('selected');
+                });
+                e.target.classList.add('selected');
+            }
+        });
+
+        // 贪吃蛇游戏
+        function startSnakeGame() {
+            const canvas = document.getElementById('snakeCanvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 560;
+            canvas.height = 280;
+
+            // 初始化游戏
+            snake = [
+                {x: 150, y: 150},
+                {x: 140, y: 150},
+                {x: 130, y: 150}
+            ];
+            generateFood();
+            direction = 'right';
+            snakeScore = 0;
+            document.getElementById('snakeScore').textContent = `得分: ${snakeScore}`;
+
+            // 游戏循环
+            if (snakeGameInterval) {
+                clearInterval(snakeGameInterval);
+            }
+            snakeGameInterval = setInterval(() => {
+                moveSnake();
+                if (checkCollision()) {
+                    clearInterval(snakeGameInterval);
+                    snakeGameInterval = null;
+                    alert(`游戏结束! 最终得分: ${snakeScore}`);
+                    return;
+                }
+                drawSnakeGame(ctx, canvas);
+            }, 150);
+        }
+
+        function stopSnakeGame() {
+            if (snakeGameInterval) {
+                clearInterval(snakeGameInterval);
+                snakeGameInterval = null;
+            }
+        }
+
+        function moveSnake() {
+            const head = {...snake[0]};
+            
+            switch(direction) {
+                case 'up': head.y -= 10; break;
+                case 'down': head.y += 10; break;
+                case 'left': head.x -= 10; break;
+                case 'right': head.x += 10; break;
+            }
+            
+            snake.unshift(head);
+            
+            // 检查是否吃到食物
+            if (head.x === food.x && head.y === food.y) {
+                snakeScore += 10;
+                document.getElementById('snakeScore').textContent = `得分: ${snakeScore}`;
+                generateFood();
+            } else {
+                snake.pop();
+            }
+        }
+
+        function checkCollision() {
+            const head = snake[0];
+            
+            // 检查边界碰撞
+            if (head.x < 0 || head.x >= 560 || head.y < 0 || head.y >= 280) {
+                return true;
+            }
+            
+            // 检查自身碰撞
+            for (let i = 1; i < snake.length; i++) {
+                if (head.x === snake[i].x && head.y === snake[i].y) {
+                    return true;
+                }
+            }
+            
+            return false;
+        }
+
+        function generateFood() {
+            food = {
+                x: Math.floor(Math.random() * 56) * 10,
+                y: Math.floor(Math.random() * 28) * 10
+            };
+        }
+
+        function drawSnakeGame(ctx, canvas) {
+            // 清空画布
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 绘制蛇
+            ctx.fillStyle = '#00ff00';
+            snake.forEach((segment, index) => {
+                if (index === 0) {
+                    ctx.fillStyle = '#00cc00'; // 蛇头颜色更深
+                } else {
+                    ctx.fillStyle = '#00ff00';
+                }
+                ctx.fillRect(segment.x, segment.y, 10, 10);
+            });
+            
+            // 绘制食物
+            ctx.fillStyle = '#ff0000';
+            ctx.fillRect(food.x, food.y, 10, 10);
+        }
+
+        // 键盘控制贪吃蛇
+        document.addEventListener('keydown', function(e) {
+            switch(e.key) {
+                case 'ArrowUp':
+                    if (direction !== 'down') direction = 'up';
+                    break;
+                case 'ArrowDown':
+                    if (direction !== 'up') direction = 'down';
+                    break;
+                case 'ArrowLeft':
+                    if (direction !== 'right') direction = 'left';
+                    break;
+                case 'ArrowRight':
+                    if (direction !== 'left') direction = 'right';
+                    break;
+            }
+        });
+
+        // 枪战游戏
+        function startShooterGame() {
+            const canvas = document.getElementById('shooterCanvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 560;
+            canvas.height = 280;
+
+            // 初始化游戏
+            player = { x: 50, y: 140 };
+            enemies = [];
+            bullets = [];
+            shooterScore = 0;
+            document.getElementById('shooterScore').textContent = `得分: ${shooterScore}`;
+
+            // 生成敌人
+            for (let i = 0; i < 5; i++) {
+                enemies.push({
+                    x: Math.random() * 300 + 200,
+                    y: Math.random() * 200 + 40,
+                    speed: Math.random() * 2 + 1
+                });
+            }
+
+            // 游戏循环
+            if (shooterGameInterval) {
+                clearInterval(shooterGameInterval);
+            }
+            shooterGameInterval = setInterval(() => {
+                updateShooterGame();
+                drawShooterGame(ctx, canvas);
+            }, 50);
+        }
+
+        function stopShooterGame() {
+            if (shooterGameInterval) {
+                clearInterval(shooterGameInterval);
+                shooterGameInterval = null;
+            }
+        }
+
+        function updateShooterGame() {
+            // 移动玩家
+            if (keys['w'] && player.y > 10) player.y -= 3;
+            if (keys['s'] && player.y < 270) player.y += 3;
+            if (keys['a'] && player.x > 10) player.x -= 3;
+            if (keys['d'] && player.x < 550) player.x += 3;
+
+            // 移动敌人
+            enemies.forEach(enemy => {
+                enemy.x -= enemy.speed;
+                if (enemy.x < 0) {
+                    enemy.x = 560;
+                    enemy.y = Math.random() * 200 + 40;
+                }
+            });
+
+            // 移动子弹
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                bullets[i].x += 8;
+                if (bullets[i].x > 560) {
+                    bullets.splice(i, 1);
+                }
+            }
+
+            // 检查碰撞
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                for (let j = enemies.length - 1; j >= 0; j--) {
+                    const dx = bullets[i].x - enemies[j].x;
+                    const dy = bullets[i].y - enemies[j].y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < 15) {
+                        bullets.splice(i, 1);
+                        enemies.splice(j, 1);
+                        shooterScore += 10;
+                        document.getElementById('shooterScore').textContent = `得分: ${shooterScore}`;
+                        
+                        // 生成新敌人
+                        enemies.push({
+                            x: 560,
+                            y: Math.random() * 200 + 40,
+                            speed: Math.random() * 2 + 1
+                        });
+                        break;
+                    }
+                }
+            }
+        }
+
+        function drawShooterGame(ctx, canvas) {
+            // 清空画布
+            ctx.fillStyle = '#1a1a2e';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 绘制玩家
+            ctx.fillStyle = '#00ff00';
+            ctx.fillRect(player.x, player.y, 20, 20);
+
+            // 绘制敌人
+            ctx.fillStyle = '#ff0000';
+            enemies.forEach(enemy => {
+                ctx.fillRect(enemy.x, enemy.y, 15, 15);
+            });
+
+            // 绘制子弹
+            ctx.fillStyle = '#ffff00';
+            bullets.forEach(bullet => {
+                ctx.fillRect(bullet.x, bullet.y, 8, 4);
+            });
+        }
+
+        // 键盘事件监听
+        document.addEventListener('keydown', function(e) {
+            keys[e.key.toLowerCase()] = true;
+        });
+
+        document.addEventListener('keyup', function(e) {
+            keys[e.key.toLowerCase()] = false;
+        });
+
+        // 鼠标点击射击
+        document.getElementById('shooterCanvas').addEventListener('click', function(e) {
+            const canvas = document.getElementById('shooterCanvas');
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            bullets.push({
+                x: player.x + 20,
+                y: player.y + 10
+            });
+        });
+
+        // 更改背景
+        function changeBackground(type) {
+            const desktop = document.getElementById('desktop');
+            const options = document.querySelectorAll('.bg-option');
+            
+            options.forEach(option => option.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            switch(type) {
+                case 'default':
+                    desktop.style.background = 'linear-gradient(45deg, #ff0080, #0080ff)';
+                    break;
+                case 'rainbow':
+                    desktop.style.background = 'linear-gradient(45deg, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff)';
+                    break;
+                case 'beach':
+                    desktop.style.background = 'linear-gradient(45deg, #87CEEB, #F0E68C)';
+                    break;
+                case 'purple':
+                    desktop.style.background = 'linear-gradient(45deg, #667eea, #764ba2)';
+                    break;
+                case 'pink':
+                    desktop.style.background = 'linear-gradient(45deg, #f093fb, #f5576c)';
+                    break;
+                case 'green':
+                    desktop.style.background = 'linear-gradient(45deg, #43e97b, #38f9d7)';
+                    break;
+            }
+        }
+
+        // 窗口拖拽功能
+        document.querySelectorAll('.window-header').forEach(header => {
+            header.addEventListener('mousedown', function(e) {
+                const window = this.parentElement;
+                let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+                
+                e = e || window.event;
+                e.preventDefault();
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                
+                document.onmouseup = closeDragElement;
+                document.onmousemove = elementDrag;
+                
+                function elementDrag(e) {
+                    e = e || window.event;
+                    e.preventDefault();
+                    pos1 = pos3 - e.clientX;
+                    pos2 = pos4 - e.clientY;
+                    pos3 = e.clientX;
+                    pos4 = e.clientY;
+                    window.style.top = (window.offsetTop - pos2) + "px";
+                    window.style.left = (window.offsetLeft - pos1) + "px";
+                }
+                
+                function closeDragElement() {
+                    document.onmouseup = null;
+                    document.onmousemove = null;
+                }
+            });
+        });
+
+        // 点击其他地方关闭开始菜单
+        document.addEventListener('click', function(e) {
+            if (isStartMenuOpen && !e.target.closest('.start-btn') && !e.target.closest('.start-menu')) {
+                isStartMenuOpen = false;
+                document.getElementById('startMenu').style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
