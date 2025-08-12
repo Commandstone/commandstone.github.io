@@ -1,176 +1,152 @@
+
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>页面重定向中...</title>
+    <title>正在跳转中...</title>
     <style>
-        * {
+        body {
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             height: 100vh;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
-            color: white;
+            background: linear-gradient(135deg, #E6E6FA 0%, #87CEFA 100%);
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+            user-select: none;
         }
-        
         .container {
             text-align: center;
-            padding: 2rem;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
+            padding: 30px;
+            background-color: rgba(255,255,255,0.2);
             border-radius: 20px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-            max-width: 90%;
-            width: 500px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            backdrop-filter: blur(5px);
+            animation: fadeIn 1s ease-out;
         }
-        
-        .logo {
-            width: 80px;
-            height: 80px;
-            margin: 0 auto 1.5rem;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2rem;
+        .cat-container {
+            position: relative;
+            width: 250px;
+            height: 250px;
+            margin: 0 auto 25px;
+            pointer-events: none;
         }
-        
-        h1 {
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
-            font-weight: 300;
+        .cat-gif {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            animation: pulse 2s infinite, float 3s ease-in-out infinite;
+            -webkit-user-drag: none;
+            user-drag: none;
+            filter: drop-shadow(0 10px 15px rgba(0,0,0,0.1));
         }
-        
-        p {
-            font-size: 1.2rem;
-            margin-bottom: 2rem;
-            opacity: 0.9;
-        }
-        
         .countdown {
-            font-size: 3rem;
+            font-size: 22px;
+            color: #4B0082;
+            margin: 20px 0;
             font-weight: bold;
-            margin: 1rem 0;
-            color: #ffeb3b;
+            text-shadow: 0 2px 4px rgba(255,255,255,0.5);
+            opacity: 0;
+            animation: fadeIn 1s forwards 0.5s;
         }
-        
         .progress-container {
             width: 100%;
-            height: 8px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 4px;
+            max-width: 350px;
+            height: 10px;
+            background-color: rgba(75,0,130,0.2);
+            border-radius: 5px;
+            margin: 20px auto;
             overflow: hidden;
-            margin: 2rem 0;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
         }
-        
         .progress-bar {
             height: 100%;
-            background: linear-gradient(to right, #4caf50, #8bc34a);
-            width: 100%;
-            border-radius: 4px;
-            animation: countdown 3s linear forwards;
+            width: 0;
+            background: linear-gradient(90deg, #9370DB 0%, #BA55D3 100%);
+            border-radius: 5px;
+            transition: width 0.1s linear;
         }
-        
-        @keyframes countdown {
-            from { width: 100%; }
-            to { width: 0%; }
+        .hint {
+            color: #6A5ACD;
+            font-size: 14px;
+            margin-top: 15px;
+            opacity: 0.8;
         }
-        
-        .redirect-link {
-            display: inline-block;
-            margin-top: 1.5rem;
-            padding: 0.8rem 1.5rem;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 50px;
-            text-decoration: none;
-            color: white;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            border: 1px solid rgba(255, 255, 255, 0.3);
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
         }
-        
-        .redirect-link:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: translateY(-2px);
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
         }
-        
-        .loader {
-            display: inline-block;
-            width: 24px;
-            height: 24px;
-            border: 3px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 1s ease-in-out infinite;
-            margin-right: 10px;
-            vertical-align: middle;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
-        @media (max-width: 600px) {
-            .container {
-                padding: 1.5rem;
-            }
-            
-            h1 {
-                font-size: 2rem;
-            }
-            
-            p {
-                font-size: 1rem;
-            }
-            
-            .countdown {
-                font-size: 2rem;
-            }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="logo">🔗</div>
-        <h1>页面重定向中</h1>
-        <p>您将被重定向到目标网站</p>
-        
-        <div class="countdown" id="countdown">3</div>
-        
-        <div class="progress-container">
-            <div class="progress-bar"></div>
+        <div class="cat-container">
+            <img src="cat.gif" alt="oiiai" class="cat-gif" draggable="false">
         </div>
-        
-        <p>正在为您跳转到 <strong>CST云盘</strong></p>
-        
-        <a href="https://cstx.zone.id/CSTCloud" class="redirect-link">
-            <span class="loader"></span>
-            立即跳转
-        </a>
+        <div class="countdown" id="countdown">10秒后自动跳转...</div>
+        <div class="progress-container">
+            <div class="progress-bar" id="progress"></div>
+        </div>
+        <div class="hint">请稍候，正在为跳转...</div>
     </div>
 
     <script>
-        let count = 3;
-        const countdownElement = document.getElementById('countdown');
+        // 禁用右键菜单
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            return false;
+        });
         
-        const countdown = setInterval(() => {
-            count--;
-            countdownElement.textContent = count;
+        // 禁用开发者工具快捷键
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'F12' || 
+                (e.ctrlKey && e.shiftKey && e.key === 'I') || 
+                (e.ctrlKey && e.shiftKey && e.key === 'J') || 
+                (e.ctrlKey && e.key === 'U') || 
+                (e.ctrlKey && e.key === 'S') || 
+                (e.ctrlKey && e.key === 'P')) {
+                e.preventDefault();
+                return false;
+            }
+        });
+
+        // 禁用文本选择和拖动
+        document.onselectstart = function() { return false; };
+        document.ondragstart = function() { return false; };
+
+        // 倒计时和进度条动画
+        let seconds = 10;
+        const countdownElement = document.getElementById('countdown');
+        const progressElement = document.getElementById('progress');
+        
+        const timer = setInterval(() => {
+            seconds--;
+            countdownElement.textContent = `${seconds}秒后自动跳转...`;
+            progressElement.style.width = `${(10 - seconds) * 10}%`;
             
-            if (count <= 0) {
-                clearInterval(countdown);
-                window.location.href = 'https://cstx.zone.id/CSTCloud';
+            if (seconds <= 0) {
+                clearInterval(timer);
+                window.location.href = "https://cstx.zone.id/CSTCloud";
             }
         }, 1000);
+
+        // 防止页面离开
+        window.onbeforeunload = function() {
+            return "您确定要离开此页面吗？";
+        };
     </script>
 </body>
 </html>
