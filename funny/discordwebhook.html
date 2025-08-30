@@ -1,0 +1,335 @@
+<html lang="zh-CN"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discord Webhook 发送器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            light: '#8EC5FC',
+                            DEFAULT: '#E0C3FC',
+                            dark: '#8EC5FC'
+                        },
+                        discord: {
+                            blue: '#5865F2',
+                            dark: '#2F3136',
+                            light: '#B9BBBE'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .gradient-text {
+                background-clip: text;
+                -webkit-background-clip: text;
+                color: transparent;
+                background-image: linear-gradient(90deg, #8EC5FC, #E0C3FC);
+                background-size: 200% auto;
+                animation: gradientShift 4s ease infinite;
+            }
+            .gradient-border {
+                position: relative;
+                border: double 1px transparent;
+                background-image: linear-gradient(#ffffff, #ffffff), 
+                                  linear-gradient(90deg, #8EC5FC, #E0C3FC);
+                background-origin: border-box;
+                background-clip: padding-box, border-box;
+            }
+            .btn-gradient {
+                background-image: linear-gradient(90deg, #8EC5FC, #E0C3FC);
+                transition: all 0.3s ease;
+            }
+            .btn-gradient:hover {
+                background-image: linear-gradient(90deg, #74b0f5, #d0a8f8);
+                transform: translateY(-2px);
+            }
+            .card-hover {
+                transition: transform 0.3s ease, box-shadow 0.3s ease;
+            }
+            .card-hover:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 10px 25px -5px rgba(142, 197, 252, 0.2), 0 8px 10px -6px rgba(142, 197, 252, 0.1);
+            }
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans text-gray-800 min-h-screen flex flex-col">
+    <div class="max-w-4xl mx-auto px-4 py-8 md:py-12 flex-grow">
+        <header class="text-center mb-10">
+            <div class="inline-flex items-center justify-center mb-4">
+                <i class="fa fa-paper-plane text-primary-dark text-4xl mr-3 animate-pulse"></i>
+                <h1 class="text-[clamp(1.8rem,4vw,2.5rem)] font-bold gradient-text">
+                    Discord Webhook 发送器
+                </h1>
+            </div>
+            <p class="text-gray-600 max-w-2xl mx-auto">
+                发送自定义文本到Discord频道，支持@everyone提及
+            </p>
+        </header>
+
+        <!-- 主要内容区 -->
+        <main class="bg-white rounded-xl shadow-lg overflow-hidden card-hover mb-12">
+            <div class="p-6 md:p-8">
+                <!-- Webhook URL 输入 -->
+                <div class="mb-8">
+                    <label for="webhookUrl" class="block text-sm font-medium text-gray-700 mb-2">
+                        Discord Webhook URL
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa fa-link text-gray-400"></i>
+                        </div>
+                        <input type="url" id="webhookUrl" placeholder="https://discord.com/api/webhooks/..." class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-light focus:border-primary-light transition-all duration-300" required="">
+                    </div>
+                    <p class="mt-2 text-xs text-gray-500">
+                        从Discord服务器设置中获取的Webhook URL
+                    </p>
+                </div>
+
+
+                <div class="space-y-6 mb-8">
+                    <div>
+                        <label for="messageContent" class="block text-sm font-medium text-gray-700 mb-2">
+                            消息内容 <span class="text-primary-dark">(支持富文本)</span>
+                        </label>
+                        <textarea id="messageContent" rows="3" placeholder="输入消息内容，可使用@everyone等提及功能" class="block w-full px-3 py-3 gradient-border rounded-lg focus:ring-2 focus:ring-primary-light/30 transition-all duration-300" value="@everyone 紧急通知"></textarea>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="errorType" class="block text-sm font-medium text-gray-700 mb-2">
+                                主题 
+                            </label>
+                            <input type="text" id="errorType" placeholder="例如：测试" class="block w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-light focus:border-primary-light transition-all duration-300">
+                        </div>
+                        <div>
+                            <label for="errorTime" class="block text-sm font-medium text-gray-700 mb-2">
+                                发生时间 
+                            </label>
+                            <input type="datetime-local" id="errorTime" class="block w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-light focus:border-primary-light transition-all duration-300">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="messageUsername" class="block text-sm font-medium text-gray-700 mb-2">
+                            发送者名称
+                        </label>
+                        <input type="text" id="messageUsername" placeholder="显示的发送者名称" class="block w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-light focus:border-primary-light transition-all duration-300" value="CST-Bot">
+                    </div>
+
+                    <div>
+                        <label for="messageAvatar" class="block text-sm font-medium text-gray-700 mb-2">
+                            头像URL (可选)
+                        </label>
+                        <input type="url" id="messageAvatar" placeholder="发送者头像的图片URL" class="block w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-light focus:border-primary-light transition-all duration-300">
+                    </div>
+                </div>
+
+                <!-- 发送按钮 - 渐变背景 -->
+                <div class="flex flex-col sm:flex-row gap-4 justify-center mb-6">
+                    <button id="sendButton" class="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-gray-800 
+                                   btn-gradient focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-light 
+                                   w-full sm:w-auto">
+                        <i class="fa fa-paper-plane mr-2"></i>
+                        发送消息
+                    </button>
+                    <button id="clearButton" class="inline-flex items-center justify-center px-6 py-3 border border-gray-300 text-base font-medium rounded-lg shadow-sm text-gray-700 bg-white 
+                                   hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-light transition-all duration-300 w-full sm:w-auto">
+                        <i class="fa fa-eraser mr-2"></i>
+                        清空内容
+                    </button>
+                </div>
+
+                <!-- 状态消息 -->
+                <div id="statusMessage" class="hidden p-4 rounded-lg mb-4 transition-all duration-300"></div>
+            </div>
+        </main>
+
+        <!-- 示例区域 - 带渐变标题 -->
+        <div class="bg-gray-50 border border-gray-200 rounded-xl p-6 card-hover">
+            <h2 class="text-lg font-semibold mb-4 flex items-center gradient-text">
+                <i class="fa fa-info-circle mr-2"></i>
+                使用说明
+            </h2>
+            <div class="space-y-3 text-sm text-gray-600">
+                <p>• 使用 <code class="bg-gray-200 px-1 py-0.5 rounded">@everyone</code> 或 <code class="bg-gray-200 px-1 py-0.5 rounded">@here</code> 提及所有人</p>
+                <p>• 使用用户ID提及特定用户: <code class="bg-gray-200 px-1 py-0.5 rounded">&lt;@用户ID&gt;</code></p>
+                <p>• 使用角色ID提及特定角色: <code class="bg-gray-200 px-1 py-0.5 rounded">&lt;@&amp;角色ID&gt;</code></p>
+                <p>• 错误信息格式: <code class="bg-gray-200 px-1 py-0.5 rounded">服务器错误: [错误类型]，发生时间: [时间]</code></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 页脚 - 带渐变的CST协会标识 -->
+    <footer class="mt-auto py-6 border-t border-gray-200">
+        <div class="max-w-4xl mx-auto px-4 text-center">
+            <p class="text-lg font-bold gradient-text">
+                CST协会 | 2025
+            </p>
+            <p class="text-sm text-gray-500 mt-2">CST-Discord消息通知系统</p>
+        </div>
+    </footer>
+
+    <script>
+        // DOM元素
+        const webhookUrlInput = document.getElementById('webhookUrl');
+        const messageContentInput = document.getElementById('messageContent');
+        const errorTypeInput = document.getElementById('errorType');
+        const errorTimeInput = document.getElementById('errorTime');
+        const messageUsernameInput = document.getElementById('messageUsername');
+        const messageAvatarInput = document.getElementById('messageAvatar');
+        const sendButton = document.getElementById('sendButton');
+        const clearButton = document.getElementById('clearButton');
+        const statusMessage = document.getElementById('statusMessage');
+
+        // 设置当前时间为默认时间
+        document.addEventListener('DOMContentLoaded', () => {
+            const now = new Date();
+            // 调整到本地时间并格式化
+            const localISOTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
+                .toISOString()
+                .slice(0, 16);
+            errorTimeInput.value = localISOTime;
+        });
+
+        // 发送消息函数
+        async function sendDiscordMessage() {
+            // 验证Webhook URL
+            const webhookUrl = webhookUrlInput.value.trim();
+            if (!webhookUrl || !webhookUrl.startsWith('https://discord.com/api/webhooks/')) {
+                showStatus('请输入有效的Discord Webhook URL', 'error');
+                return;
+            }
+
+            // 构建消息内容
+            let content = messageContentInput.value.trim();
+            
+            // 添加错误信息（如果提供）
+            const errorType = errorTypeInput.value.trim();
+            const errorTime = errorTimeInput.value.trim();
+            
+            if (errorType || errorTime) {
+                let errorMessage = "\n事件: ";
+                errorMessage += errorType ? errorType : "未指定错误类型";
+                errorMessage += errorTime ? `\n发生时间: ${formatDateTime(errorTime)}` : "";
+                content += errorMessage;
+            }
+
+            // 如果没有内容
+            if (!content) {
+                showStatus('请输入消息内容', 'error');
+                return;
+            }
+
+            // 构建发送数据
+            const payload = {
+                content: content,
+                username: messageUsernameInput.value.trim() || undefined,
+                avatar_url: messageAvatarInput.value.trim() || undefined
+            };
+
+            try {
+                // 禁用发送按钮
+                sendButton.disabled = true;
+                sendButton.innerHTML = '<i class="fa fa-circle-o-notch fa-spin mr-2"></i> 发送中...';
+                
+                // 发送请求
+                const response = await fetch(webhookUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload),
+                });
+
+                // 处理响应
+                if (response.ok) {
+                    showStatus('消息发送成功！', 'success');
+                    // 清空部分字段
+                    messageContentInput.value = '';
+                    errorTypeInput.value = '';
+                } else {
+                    const errorData = await response.json().catch(() => null);
+                    const errorMessage = errorData?.message || `发送失败 (状态码: ${response.status})`;
+                    showStatus(`发送失败: ${errorMessage}`, 'error');
+                }
+            } catch (error) {
+                showStatus(`发送失败: ${error.message}`, 'error');
+            } finally {
+                // 恢复发送按钮
+                sendButton.disabled = false;
+                sendButton.innerHTML = '<i class="fa fa-paper-plane mr-2"></i> 发送消息';
+            }
+        }
+
+        // 显示状态消息
+        function showStatus(message, type) {
+            statusMessage.textContent = message;
+            statusMessage.classList.remove('hidden', 'bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800', 'border', 'border-green-200', 'border-red-200');
+            
+            if (type === 'success') {
+                statusMessage.classList.add('bg-green-100', 'text-green-800', 'border', 'border-green-200');
+            } else if (type === 'error') {
+                statusMessage.classList.add('bg-red-100', 'text-red-800', 'border', 'border-red-200');
+            }
+
+            // 5秒后自动隐藏
+            setTimeout(() => {
+                statusMessage.classList.add('hidden');
+            }, 5000);
+        }
+
+        // 清空内容
+        function clearForm() {
+            messageContentInput.value = '';
+            errorTypeInput.value = '';
+            // 保留URL、用户名和头像，方便重复发送
+            statusMessage.classList.add('hidden');
+        }
+
+        // 格式化日期时间
+        function formatDateTime(dateTimeString) {
+            if (!dateTimeString) return '';
+            const date = new Date(dateTimeString);
+            return date.toLocaleString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        // 事件监听
+        sendButton.addEventListener('click', sendDiscordMessage);
+        clearButton.addEventListener('click', clearForm);
+        
+        // 支持按Enter发送（按住Shift+Enter换行）
+        messageContentInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendDiscordMessage();
+            }
+        });
+    </script>
+
+</body></html>
